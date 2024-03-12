@@ -1,0 +1,147 @@
+import 'package:beotura/providers/single_route_provider.dart';
+import 'package:flutter/material.dart';
+import 'screens/about_screen.dart';
+import 'screens/tours_screen.dart';
+import 'screens/locations_screen.dart';
+import 'package:geolocator/geolocator.dart';
+import 'screens/home_screen.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+
+void main() {
+  runApp(const ProviderScope(child: MyApp()));
+}
+
+class MyApp extends StatefulHookConsumerWidget {
+  const MyApp({super.key});
+
+  static final List<Widget> _pages = <Widget>[
+    const Text('Language'),
+    const ToursScreen(),
+    const HomeScreen(),
+    const LocationScreen(),
+    const AboutScreen(),
+  ];
+
+  @override
+  ConsumerState<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends ConsumerState<MyApp> {
+  Position? _currentPosition;
+  Future<void> getCurrentPosition() async {
+    final hasPermission = await handleLocationPermission();
+    if (!hasPermission) return;
+    await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    ).then((Position position) {
+      setState(() => _currentPosition = position);
+    }).catchError((e) {
+      debugPrint(e);
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void didChangeDependencies() async {
+    super.didChangeDependencies();
+    getCurrentPosition();
+  }
+
+  final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
+  Future<bool> handleLocationPermission() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    // ignore: duplicate_ignore
+    if (!serviceEnabled) {
+      scaffoldMessengerKey.currentState!.showSnackBar(
+          const SnackBar(content: Text('location services are disabled')));
+
+      return false;
+    }
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        scaffoldMessengerKey.currentState!.showSnackBar(
+            const SnackBar(content: Text('Location permissions are denied')));
+
+        return false;
+      }
+    }
+    if (permission == LocationPermission.deniedForever) {
+      scaffoldMessengerKey.currentState!.showSnackBar(const SnackBar(
+          content: Text(
+              'Location permissions are permanently denied, we cannot request permissions. You must go to settings to allow location services.')));
+
+      return false;
+    }
+    return true;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final singleRoute = ref.watch(singleRouteProvider);
+    if (_currentPosition != null) {
+      singleRoute.originLatitude = _currentPosition!.latitude;
+      singleRoute.originLongitude = _currentPosition!.longitude;
+    }
+    final navigationState = useState(2);
+    void onItemTapped(int index) {
+      navigationState.value = index;
+    }
+
+    return MaterialApp(
+      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.deepPurple, brightness: Brightness.dark),
+          useMaterial3: true,
+          textTheme: GoogleFonts.aBeeZeeTextTheme(
+            Theme.of(context).textTheme,
+          ).apply(bodyColor: Colors.white)),
+      home: Scaffold(
+        bottomNavigationBar: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(Icons.language_outlined),
+              label: 'Language',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.map_outlined),
+              label: 'Tours',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.location_pin),
+              label: 'Locations',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.school),
+              label: 'About Us',
+            ),
+          ],
+          currentIndex: navigationState.value,
+          selectedItemColor: Colors.blue,
+          onTap: onItemTapped,
+        ),
+        body: Center(
+          child: MyApp._pages.elementAt(navigationState.value),
+        ),
+      ),
+    );
+  }
+}

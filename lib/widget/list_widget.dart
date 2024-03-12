@@ -1,0 +1,76 @@
+import 'package:flutter/material.dart';
+import '../classes/card_item.dart';
+import '../classes/loactions_class.dart';
+import '../screens/details_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/single_route_provider.dart';
+
+class ListCard extends ConsumerWidget {
+  const ListCard({
+    super.key,
+    required this.item,
+    this.locations,
+    this.latitude,
+    this.longitude,
+  });
+  final double? latitude;
+  final double? longitude;
+  final CardItem item;
+  final List<Location>? locations;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final singleRoute = ref.watch(singleRouteProvider);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+      child: GestureDetector(
+        onTap: () {
+          if (latitude != null && longitude != null) {
+            singleRoute.destinationLatitude = latitude!;
+            singleRoute.destinationLongitude = longitude!;
+          }
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DetailsScreen(
+                title: item.title,
+                imageUrl: item.imageUrl,
+                text: item.description,
+                locations: locations,
+              ),
+            ),
+          );
+        },
+        child: Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25),
+          ),
+          color: Colors.black,
+          elevation: 5,
+          child: Container(
+            height: 250,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(25),
+              image: DecorationImage(
+                image: NetworkImage(item.imageUrl),
+                fit: BoxFit.cover,
+                opacity: 0.6,
+              ),
+            ),
+            padding: const EdgeInsets.all(10),
+            child: Center(
+              child: Text(
+                item.title,
+                style: const TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
