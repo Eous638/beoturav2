@@ -6,9 +6,13 @@ import 'package:flutter_mapbox_navigation/flutter_mapbox_navigation.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../enums/language_enum.dart';
 import '../providers/single_route_provider.dart';
 import '../classes/single_route_class.dart';
 import './navigation_screen.dart';
+
+import '../l10n/localization_helper.dart';
+import '../providers/language_provider.dart';
 
 class DetailsScreen extends ConsumerStatefulWidget {
   const DetailsScreen({
@@ -126,6 +130,8 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = LocalizationHelper(ref);
+    final currentLanguage = ref.watch(languageProvider);
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -152,8 +158,8 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: ExpansionTile(
-                    title: const Text(
-                      'Locations',
+                    title: Text(
+                      l10n.translate('locations'),
                     ),
                     children: [
                       ListView.builder(
@@ -175,19 +181,23 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
                             ),
                             child: ListTile(
                               leading: Container(
-                                height: 70,
-                                width: 70,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(50),
-                                  image: DecorationImage(
-                                    image: NetworkImage(
-                                      location.imageUrl,
-                                    ),
-                                    fit: BoxFit.cover,
+                                  height: 70,
+                                  width: 70,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(50),
                                   ),
-                                ),
-                              ),
-                              title: Text(location.title),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(50),
+                                    child: Image.network(
+                                      location.imageUrl,
+                                      fit: BoxFit.cover,
+                                      cacheWidth: 300,
+                                      cacheHeight: 300,
+                                    ),
+                                  )),
+                              title: Text(currentLanguage == Language.english
+                                  ? location.title_en
+                                  : location.title),
                             ),
                           );
                         },
@@ -225,11 +235,11 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
                   elevation: 3,
                   backgroundColor: Colors.red, // Set the button color to red
                 ),
-                child: const Padding(
-                  padding: EdgeInsets.all(12.0),
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
                   child: Text(
-                    'Zapocni put',
-                    style: TextStyle(color: Colors.white, fontSize: 16),
+                    l10n.translate('begin tour'),
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
                   ),
                 ),
               ),

@@ -1,9 +1,11 @@
+import 'package:beotura/enums/language_enum.dart';
 import 'package:flutter/material.dart';
 import '../classes/card_item.dart';
 import '../classes/loactions_class.dart';
 import '../screens/details_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/single_route_provider.dart';
+import '../providers/language_provider.dart';
 
 class ListCard extends ConsumerWidget {
   const ListCard({
@@ -21,6 +23,7 @@ class ListCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final singleRoute = ref.watch(singleRouteProvider);
+    final currentLanguage = ref.read(languageProvider);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
       child: GestureDetector(
@@ -33,9 +36,13 @@ class ListCard extends ConsumerWidget {
             context,
             MaterialPageRoute(
               builder: (context) => DetailsScreen(
-                title: item.title,
+                title: currentLanguage == Language.english
+                    ? item.title_en
+                    : item.title,
                 imageUrl: item.imageUrl,
-                text: item.description,
+                text: currentLanguage == Language.english
+                    ? item.description_en
+                    : item.description,
                 locations: locations,
               ),
             ),
@@ -60,7 +67,9 @@ class ListCard extends ConsumerWidget {
             padding: const EdgeInsets.all(10),
             child: Center(
               child: Text(
-                item.title,
+                currentLanguage == Language.english
+                    ? item.title_en
+                    : item.title,
                 style: const TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.bold,

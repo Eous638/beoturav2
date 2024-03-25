@@ -3,6 +3,7 @@ import "package:beotura/widget/list_widget.dart";
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/tour_provider.dart';
 import '../classes/tours_class.dart';
+import '../l10n/localization_helper.dart';
 
 class ToursScreen extends ConsumerWidget {
   const ToursScreen({
@@ -15,7 +16,11 @@ class ToursScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tours'),
+        title: Text(LocalizationHelper(ref).translate('Tours')),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {},
+        child: const Icon(Icons.add),
       ),
       body: tours.when(
         loading: () => const Center(child: CircularProgressIndicator()),

@@ -1,3 +1,4 @@
+import 'package:beotura/enums/language_enum.dart';
 import 'package:beotura/providers/tour_provider.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
@@ -8,6 +9,7 @@ import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:beotura/screens/details_screen.dart';
 import 'package:beotura/providers/single_route_provider.dart';
+import '../providers/language_provider.dart';
 
 class MapSample extends ConsumerStatefulWidget {
   const MapSample({super.key});
@@ -85,6 +87,7 @@ class _MapSampleState extends ConsumerState<MapSample> {
   ) {
     final locationProvider = ref.watch(locationProviderProvider);
     final singleRoute = ref.watch(singleRouteProvider);
+    final currentLanguage = ref.watch(languageProvider);
 
     locationProvider.when(
       data: (locations) {
@@ -103,8 +106,12 @@ class _MapSampleState extends ConsumerState<MapSample> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => DetailsScreen(
-                            title: location.title,
-                            text: location.description,
+                            title: currentLanguage == Language.english
+                                ? location.title_en
+                                : location.title,
+                            text: currentLanguage == Language.english
+                                ? location.description_en
+                                : location.description,
                             imageUrl: location.imageUrl,
                           ),
                         ),
@@ -113,8 +120,8 @@ class _MapSampleState extends ConsumerState<MapSample> {
                     child: Image.network(
                       location.icon,
                       fit: BoxFit.fill,
-                      cacheWidth: 40,
-                      cacheHeight: 40,
+                      cacheWidth: 300,
+                      cacheHeight: 300,
                     ),
                   ),
                 ),

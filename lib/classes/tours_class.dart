@@ -1,3 +1,5 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'card_item.dart';
 import 'loactions_class.dart';
 
@@ -6,12 +8,16 @@ class Tour extends CardItem {
 
   Tour({
     required String title,
+    required String title_en,
     required String description,
+    required String description_en,
     required String imageUrl,
     required this.locations,
   }) : super(
           title: title,
+          title_en: title_en,
           description: description,
+          description_en: description_en,
           imageUrl: imageUrl,
         ) {
     locations.sort((a, b) => a.order.compareTo(b.order));
@@ -20,7 +26,9 @@ class Tour extends CardItem {
   factory Tour.fromJson(Map<String, dynamic> json) {
     return Tour(
       title: json['title'],
+      title_en: json['title_en'],
       description: json['description'],
+      description_en: json['description_en'],
       imageUrl: json['image'],
       locations: json['Place']
           .map<Location>((json) => Location.fromJson(json))

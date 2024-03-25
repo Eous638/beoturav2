@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../l10n/localization_helper.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AboutScreen extends StatelessWidget {
+class AboutScreen extends ConsumerWidget {
   const AboutScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = LocalizationHelper(ref);
     return SingleChildScrollView(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Padding(
-            padding: EdgeInsets.only(bottom: 15, top: 50),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 15, top: 50),
             child: Text(
-              'Ovo je nasa prica',
-              style: TextStyle(
+              l10n.translate('our_story'),
+              style: const TextStyle(
                 fontSize: 30,
                 fontWeight: FontWeight.normal,
               ),
@@ -33,13 +36,13 @@ class AboutScreen extends StatelessWidget {
               ),
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
             child: Text(
-              'Mi smo srednjoškolci iz Beograda i otkrivamo interesantnu stranu Beogradske istorije. Istražujemo i fotografišemo skrivena blaga našeg grada, koje sada možete i sami iskusiti! Odaberite svoju turu i prepustite se u Beogradsku Avanturu sa nama! Ako želite da saznate više, posetite našu web stranicu.',
+              l10n.translate('about_text'),
               textAlign: TextAlign.justify,
-              style:
-                  TextStyle(fontSize: 15, letterSpacing: 0.5, wordSpacing: 1),
+              style: const TextStyle(
+                  fontSize: 15, letterSpacing: 0.5, wordSpacing: 1),
             ),
           ),
           const SizedBox(
@@ -51,8 +54,8 @@ class AboutScreen extends StatelessWidget {
               backgroundColor: Colors.lightBlue,
               padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
             ),
-            child: const Text('Poseti nas',
-                style: TextStyle(
+            child: Text(l10n.translate('visit us'),
+                style: const TextStyle(
                   fontSize: 20,
                   color: Colors.white,
                 )),

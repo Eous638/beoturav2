@@ -1,13 +1,19 @@
+import 'package:beotura/enums/language_enum.dart';
 import 'package:beotura/providers/single_route_provider.dart';
 import 'package:flutter/material.dart';
 import 'screens/about_screen.dart';
 import 'screens/tours_screen.dart';
 import 'screens/locations_screen.dart';
+import 'screens/language_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'screens/home_screen.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import '../l10n/localization_helper.dart';
+import './providers/language_provider.dart';
+
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const ProviderScope(child: MyApp()));
@@ -17,7 +23,7 @@ class MyApp extends StatefulHookConsumerWidget {
   const MyApp({super.key});
 
   static final List<Widget> _pages = <Widget>[
-    const Text('Language'),
+    const LanguageScreen(),
     const ToursScreen(),
     const HomeScreen(),
     const LocationScreen(),
@@ -45,12 +51,34 @@ class _MyAppState extends ConsumerState<MyApp> {
   @override
   void initState() {
     super.initState();
+    getLanguage();
   }
 
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
     getCurrentPosition();
+  }
+
+  Future<void> getLanguage() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final language = prefs.getString('language');
+    if (language != null) {
+      ref.read(languageProvider.notifier).update((state) {
+        if (language == Language.english.toString()) {
+          ref
+              .read(languageProvider.notifier)
+              .update((state) => Language.english);
+        } else {
+          ref
+              .read(languageProvider.notifier)
+              .update((state) => Language.serbian);
+        }
+        return state;
+      });
+    } else {
+      ref.read(languageProvider.notifier).update((state) => Language.serbian);
+    }
   }
 
   final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
@@ -90,6 +118,10 @@ class _MyAppState extends ConsumerState<MyApp> {
   @override
   Widget build(BuildContext context) {
     final singleRoute = ref.watch(singleRouteProvider);
+    final l10n = LocalizationHelper(ref);
+    // ignore: unused_local_variable
+    final currentLanguage = ref.watch(languageProvider);
+
     if (_currentPosition != null) {
       singleRoute.originLatitude = _currentPosition!.latitude;
       singleRoute.originLongitude = _currentPosition!.longitude;
@@ -112,26 +144,26 @@ class _MyAppState extends ConsumerState<MyApp> {
       home: Scaffold(
         bottomNavigationBar: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
-          items: const <BottomNavigationBarItem>[
+          items: <BottomNavigationBarItem>[
             BottomNavigationBarItem(
-              icon: Icon(Icons.language_outlined),
-              label: 'Language',
+              icon: const Icon(Icons.language_outlined),
+              label: l10n.translate('language'),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.map_outlined),
-              label: 'Tours',
+              icon: const Icon(Icons.map_outlined),
+              label: l10n.translate('Tours'),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              label: 'Home',
+              icon: const Icon(Icons.home_outlined),
+              label: l10n.translate('home'),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.location_pin),
-              label: 'Locations',
+              icon: const Icon(Icons.location_pin),
+              label: l10n.translate('locations'),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.school),
-              label: 'About Us',
+              icon: const Icon(Icons.school),
+              label: l10n.translate('about'),
             ),
           ],
           currentIndex: navigationState.value,

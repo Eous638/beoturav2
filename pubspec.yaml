@@ -31,8 +31,7 @@ dependencies:
   flutter_map_location_marker: any
   flutter_map_marker_cluster: any
   flutter_mapbox_navigation: any
-  flutter_launcher_icons: "^0.13.1"
-
+  shared_preferences: ^2.2.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -42,6 +41,7 @@ dev_dependencies:
   build_runner: ^2.4.8
   custom_lint: ^0.6.2
   riverpod_lint: ^2.3.9
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   # The following line ensures that the Material Icons font is
@@ -52,6 +52,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - images/beoturaEkipa.png
+    - images/adaptive-icon.png
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true

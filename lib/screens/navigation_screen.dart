@@ -1,9 +1,12 @@
 import 'package:beotura/classes/loactions_class.dart';
+import 'package:beotura/enums/language_enum.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:beotura/providers/single_route_provider.dart';
 import 'package:flutter_mapbox_navigation/flutter_mapbox_navigation.dart';
 import 'package:beotura/classes/single_route_class.dart';
+import '../l10n/localization_helper.dart';
+import '../providers/language_provider.dart';
 
 class NavigationScreen extends ConsumerStatefulWidget {
   const NavigationScreen({super.key, this.locations});
@@ -42,7 +45,6 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
             )
             .toList() ??
         [];
-    print(_origin);
   }
 
   @override
@@ -92,7 +94,6 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
     try {
       if (_isNavigating) {
         await _navigation.finishNavigation();
-        print(_wayPoints.length);
       }
     } catch (e) {
       debugPrint(e.toString());
@@ -110,7 +111,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
         mode: MapBoxNavigationMode.walking,
         language: "en",
         units: VoiceUnits.metric,
-        simulateRoute: true,
+        simulateRoute: false,
         voiceInstructionsEnabled: false,
       ),
     );
@@ -132,9 +133,13 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
       );
     } else if (_destinationIndex < _wayPoints.length) {
       return InfoPage(
-          title: widget.locations![_destinationIndex].title,
+          title: ref.read(languageProvider.notifier).state == Language.english
+              ? widget.locations![_destinationIndex].title_en
+              : widget.locations![_destinationIndex].title,
           imageUrl: widget.locations![_destinationIndex].imageUrl,
-          text: widget.locations![_destinationIndex].description,
+          text: ref.read(languageProvider.notifier).state == Language.english
+              ? widget.locations![_destinationIndex].description_en
+              : widget.locations![_destinationIndex].description,
           click: _startNavigation,
           isFinished: isFinished(),
           goBack: goBack);
@@ -146,7 +151,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
   }
 }
 
-class StartPage extends StatelessWidget {
+class StartPage extends ConsumerWidget {
   final void Function() click;
   const StartPage({
     super.key,
@@ -154,10 +159,11 @@ class StartPage extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = LocalizationHelper(ref);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Navigation Screen'),
+        title: Text(l10n.translate('navigation')),
       ),
       body: Center(
         child: Column(
@@ -168,7 +174,7 @@ class StartPage extends StatelessWidget {
               onPressed: () {
                 click();
               },
-              child: const Text('Kreni svoje putovanje'),
+              child: Text(l10n.translate('begin journey')),
             ),
           ],
         ),
@@ -177,7 +183,7 @@ class StartPage extends StatelessWidget {
   }
 }
 
-class InfoPage extends StatelessWidget {
+class InfoPage extends ConsumerWidget {
   final String title;
   final String imageUrl;
   final String text;
@@ -196,10 +202,11 @@ class InfoPage extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = LocalizationHelper(ref);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Navigation Screen'),
+        title: Text(l10n.translate('navigation')),
         leading: IconButton(
           onPressed: () {
             goBack();
@@ -232,9 +239,12 @@ class InfoPage extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 16),
-            Text(
-              text,
-              style: const TextStyle(fontSize: 16),
+            Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: Text(
+                text,
+                style: const TextStyle(fontSize: 16),
+              ),
             ),
             const SizedBox(height: 36),
           ],
