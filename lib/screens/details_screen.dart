@@ -123,7 +123,7 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
         mode: MapBoxNavigationMode.walking,
         language: "en",
         units: VoiceUnits.imperial,
-        simulateRoute: true,
+        simulateRoute: false,
       ),
     );
   }

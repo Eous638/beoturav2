@@ -138,7 +138,7 @@ class _MyAppState extends ConsumerState<MyApp> {
           colorScheme: ColorScheme.fromSeed(
               seedColor: Colors.deepPurple, brightness: Brightness.dark),
           useMaterial3: true,
-          textTheme: GoogleFonts.aBeeZeeTextTheme(
+          textTheme: GoogleFonts.openSansTextTheme(
             Theme.of(context).textTheme,
           ).apply(bodyColor: Colors.white)),
       home: Scaffold(

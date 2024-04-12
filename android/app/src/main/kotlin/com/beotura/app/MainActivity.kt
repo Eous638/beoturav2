@@ -1,4 +1,4 @@
-package com.example.beotura
+package com.beotura.app
 
 
 import io.flutter.embedding.android.FlutterFragmentActivity
