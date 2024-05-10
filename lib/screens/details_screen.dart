@@ -180,6 +180,22 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
                               color: const Color.fromARGB(255, 63, 63, 63),
                             ),
                             child: ListTile(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => DetailsScreen(
+                                      title: currentLanguage == Language.english
+                                          ? location.title_en
+                                          : location.title,
+                                      imageUrl: location.imageUrl,
+                                      text: currentLanguage == Language.english
+                                          ? location.description_en
+                                          : location.description,
+                                    ),
+                                  ),
+                                );
+                              },
                               leading: Container(
                                   height: 70,
                                   width: 70,
