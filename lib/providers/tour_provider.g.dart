@@ -6,7 +6,7 @@ part of 'tour_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$tourProviderHash() => r'a1bda23e8ae833fc8d979009fbd7914af6c9cde2';
+String _$tourProviderHash() => r'0c93d84f30118766c0ef8f432d3189ec0078bb70';
 
 /// See also [tourProvider].
 @ProviderFor(tourProvider)
@@ -19,8 +19,10 @@ final tourProviderProvider = AutoDisposeFutureProvider<List<Tour>>.internal(
   allTransitiveDependencies: null,
 );
 
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
 typedef TourProviderRef = AutoDisposeFutureProviderRef<List<Tour>>;
-String _$locationProviderHash() => r'dad75bec69923f53a59e9c3428e6136f4d4b2186';
+String _$locationProviderHash() => r'31e858aaed4091889928df81b141686a63b2995f';
 
 /// See also [locationProvider].
 @ProviderFor(locationProvider)
@@ -35,6 +37,8 @@ final locationProviderProvider =
   allTransitiveDependencies: null,
 );
 
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
 typedef LocationProviderRef = AutoDisposeFutureProviderRef<List<Location>>;
 // ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

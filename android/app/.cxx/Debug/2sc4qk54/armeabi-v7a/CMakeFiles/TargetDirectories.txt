@@ -1,0 +1,2 @@
+E:/beoturav2/android/app/.cxx/Debug/2sc4qk54/armeabi-v7a/CMakeFiles/edit_cache.dir
+E:/beoturav2/android/app/.cxx/Debug/2sc4qk54/armeabi-v7a/CMakeFiles/rebuild_cache.dir

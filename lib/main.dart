@@ -1,21 +1,70 @@
 import 'package:beotura/enums/language_enum.dart';
 import 'package:beotura/providers/single_route_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
+import 'package:latlong2/latlong.dart';
 import 'screens/about_screen.dart';
 import 'screens/tours_screen.dart';
 import 'screens/locations_screen.dart';
 import 'screens/language_screen.dart';
-import 'package:geolocator/geolocator.dart';
 import 'screens/home_screen.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../l10n/localization_helper.dart';
 import './providers/language_provider.dart';
+import './providers/position_provider.dart';
+import 'dart:io';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await FMTCObjectBoxBackend().initialise();
+  await const FMTCStore('mapStore').manage.create();
+  FlutterForegroundTask.initCommunicationPort();
+
+  // Define the region for Belgrade
+  final region = RectangleRegion(
+    LatLngBounds(LatLng(44.7334, 20.3755), LatLng(44.9021, 20.5536)),
+  );
+
+  // Convert the region to a downloadable region
+  final downloadableRegion = region.toDownloadable(
+    minZoom: 1,
+    maxZoom: 18,
+    options: TileLayer(
+      urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+      userAgentPackageName: 'com.beotura.app',
+    ),
+  );
+
+  // Start the download
+  try {
+    final (:downloadProgress, :tileEvents) =
+        const FMTCStore('mapStore').download.startForeground(
+              region: downloadableRegion,
+            );
+  } catch (e) {
+    // Handle connection refused and default to OSM
+    final osmRegion = region.toDownloadable(
+      minZoom: 1,
+      maxZoom: 18,
+      options: TileLayer(
+        urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        userAgentPackageName: 'com.beotura.app',
+      ),
+    );
+
+    final (:downloadProgress, :tileEvents) =
+        const FMTCStore('mapStore').download.startForeground(
+              region: osmRegion,
+            );
+  }
+
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -35,29 +84,12 @@ class MyApp extends StatefulHookConsumerWidget {
 }
 
 class _MyAppState extends ConsumerState<MyApp> {
-  Position? _currentPosition;
-  Future<void> getCurrentPosition() async {
-    final hasPermission = await handleLocationPermission();
-    if (!hasPermission) return;
-    await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    ).then((Position position) {
-      setState(() => _currentPosition = position);
-    }).catchError((e) {
-      debugPrint(e);
-    });
-  }
-
   @override
   void initState() {
     super.initState();
     getLanguage();
-  }
-
-  @override
-  void didChangeDependencies() async {
-    super.didChangeDependencies();
-    getCurrentPosition();
+    _requestPermissions();
+    _initService();
   }
 
   Future<void> getLanguage() async {
@@ -81,55 +113,63 @@ class _MyAppState extends ConsumerState<MyApp> {
     }
   }
 
-  final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
-
-  Future<bool> handleLocationPermission() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    // ignore: duplicate_ignore
-    if (!serviceEnabled) {
-      scaffoldMessengerKey.currentState!.showSnackBar(
-          const SnackBar(content: Text('location services are disabled')));
-
-      return false;
+  Future<void> _requestPermissions() async {
+    final NotificationPermission notificationPermission =
+        await FlutterForegroundTask.checkNotificationPermission();
+    if (notificationPermission != NotificationPermission.granted) {
+      await FlutterForegroundTask.requestNotificationPermission();
     }
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        scaffoldMessengerKey.currentState!.showSnackBar(
-            const SnackBar(content: Text('Location permissions are denied')));
 
-        return false;
+    if (Platform.isAndroid) {
+      if (!await FlutterForegroundTask.isIgnoringBatteryOptimizations) {
+        await FlutterForegroundTask.requestIgnoreBatteryOptimization();
       }
     }
-    if (permission == LocationPermission.deniedForever) {
-      scaffoldMessengerKey.currentState!.showSnackBar(const SnackBar(
-          content: Text(
-              'Location permissions are permanently denied, we cannot request permissions. You must go to settings to allow location services.')));
-
-      return false;
-    }
-    return true;
   }
+
+  void _initService() {
+    FlutterForegroundTask.init(
+      androidNotificationOptions: AndroidNotificationOptions(
+        channelId: 'foreground_service',
+        channelName: 'Foreground Service Notification',
+        channelDescription:
+            'This notification appears when the foreground service is running.',
+        onlyAlertOnce: true,
+      ),
+      iosNotificationOptions: const IOSNotificationOptions(
+        showNotification: false,
+        playSound: false,
+      ),
+      foregroundTaskOptions: ForegroundTaskOptions(
+        eventAction: ForegroundTaskEventAction.repeat(5000),
+        autoRunOnBoot: true,
+        autoRunOnMyPackageReplaced: true,
+        allowWakeLock: true,
+        allowWifiLock: true,
+      ),
+    );
+  }
+
+  final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
   Widget build(BuildContext context) {
     final singleRoute = ref.watch(singleRouteProvider);
     final l10n = LocalizationHelper(ref);
-    // ignore: unused_local_variable
-    final currentLanguage = ref.watch(languageProvider);
+    final currentPosition = ref.watch(positionProvider);
 
-    if (_currentPosition != null) {
-      singleRoute.originLatitude = _currentPosition!.latitude;
-      singleRoute.originLongitude = _currentPosition!.longitude;
+    if (currentPosition != null) {
+      singleRoute.originLatitude = currentPosition.latitude;
+      singleRoute.originLongitude = currentPosition.longitude;
     }
     final navigationState = useState(2);
     void onItemTapped(int index) {
       navigationState.value = index;
     }
+
+    final tileProvider = FMTCTileProvider(
+      stores: const {'mapStore': BrowseStoreStrategy.readUpdateCreate},
+    );
 
     return MaterialApp(
       title: 'Flutter Demo',

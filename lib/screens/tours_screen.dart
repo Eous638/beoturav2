@@ -36,6 +36,7 @@ class ToursScreen extends ConsumerWidget {
                   return ListCard(
                     item: tour,
                     locations: tour.locations,
+                    isTour: true, // Set isTour to true
                   ); // No '!' needed
                 },
               ),

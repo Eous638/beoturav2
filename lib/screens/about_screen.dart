@@ -51,7 +51,6 @@ class AboutScreen extends ConsumerWidget {
           ElevatedButton(
             onPressed: _launchURL,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.lightBlue,
               padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
             ),
             child: Text(l10n.translate('visit us'),

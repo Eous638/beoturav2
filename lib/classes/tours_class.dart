@@ -7,6 +7,7 @@ class Tour extends CardItem {
   final List<Location> locations;
 
   Tour({
+    required String id,
     required String title,
     required String title_en,
     required String description,
@@ -14,6 +15,7 @@ class Tour extends CardItem {
     required String imageUrl,
     required this.locations,
   }) : super(
+          id: id,
           title: title,
           title_en: title_en,
           description: description,
@@ -25,6 +27,7 @@ class Tour extends CardItem {
 
   factory Tour.fromJson(Map<String, dynamic> json) {
     return Tour(
+      id: json['_id'],
       title: json['title'],
       title_en: json['title_en'],
       description: json['description'],

@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 import '../classes/tours_class.dart';
 import '../classes/loactions_class.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -8,7 +10,8 @@ part 'tour_provider.g.dart';
 
 @riverpod
 Future<List<Tour>> tourProvider(TourProviderRef ref) async {
-  final response = await http.get(Uri.parse('http://api.beotura.rs/api/tours'));
+  final response =
+      await http.get(Uri.parse('https://api2.gladni.rs/api/beotura/tours'));
   ref.keepAlive();
 
   if (response.statusCode == 200) {
@@ -21,16 +24,21 @@ Future<List<Tour>> tourProvider(TourProviderRef ref) async {
 
 @riverpod
 Future<List<Location>> locationProvider(LocationProviderRef ref) async {
-  final response =
-      await http.get(Uri.parse('http://api.beotura.rs/api/places'));
-  ref.keepAlive();
-  if (response.statusCode == 200) {
-    final data = json.decode(utf8.decode(response.bodyBytes));
-    final fetchedTours =
-        data.map<Location>((json) => Location.fromJson(json)).toList();
+  try {
+    final response =
+        await http.get(Uri.parse('https://api2.gladni.rs/api/beotura/places'));
+    ref.keepAlive();
+    if (response.statusCode == 200) {
+      final data = json.decode(utf8.decode(response.bodyBytes));
+      final fetchedTours =
+          data.map<Location>((json) => Location.fromJson(json)).toList();
 
-    return fetchedTours;
-  } else {
-    throw Exception('Failed to fetch tours: ${response.statusCode}');
+      return fetchedTours;
+    } else {
+      throw Exception('Failed to fetch tours: ${response.statusCode}');
+    }
+  } catch (e) {
+    debugPrint('Error fetching locations: $e');
+    rethrow;
   }
 }

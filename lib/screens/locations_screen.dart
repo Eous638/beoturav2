@@ -36,6 +36,7 @@ class LocationScreen extends ConsumerWidget {
                     item: location,
                     latitude: location.latitude,
                     longitude: location.longitude,
+                    isTour: false, // Ensure isTour is false
                   ); // No '!' needed
                 },
               ),

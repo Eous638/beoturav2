@@ -14,11 +14,13 @@ class ListCard extends ConsumerWidget {
     this.locations,
     this.latitude,
     this.longitude,
+    this.isTour = false, // Add this parameter
   });
   final double? latitude;
   final double? longitude;
   final CardItem item;
   final List<Location>? locations;
+  final bool isTour; // Add this field
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -44,6 +46,8 @@ class ListCard extends ConsumerWidget {
                     ? item.description_en
                     : item.description,
                 locations: locations,
+                tourId: item.id,
+                isTour: isTour, // Pass the isTour parameter
               ),
             ),
           );
