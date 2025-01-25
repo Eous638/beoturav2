@@ -7,7 +7,7 @@ import 'dart:convert';
 import '../providers/auth_provider.dart';
 
 class AddBlockadeScreen extends ConsumerStatefulWidget {
-  const AddBlockadeScreen({Key? key}) : super(key: key);
+  const AddBlockadeScreen({super.key});
 
   @override
   _AddBlockadeScreenState createState() => _AddBlockadeScreenState();

@@ -7,8 +7,8 @@ import '../l10n/localization_helper.dart';
 
 class ToursScreen extends ConsumerWidget {
   const ToursScreen({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

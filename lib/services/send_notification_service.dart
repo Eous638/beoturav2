@@ -1,4 +1,3 @@
-import 'dart:convert';
 
 import 'package:beotura/classes/organiser_location_class.dart';
 import 'package:beotura/services/combined_communication_service.dart';

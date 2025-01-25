@@ -12,8 +12,7 @@ import '../providers/blockades_provider.dart';
 class EditBlockadeScreen extends ConsumerStatefulWidget {
   final Blockade blockade;
 
-  const EditBlockadeScreen({Key? key, required this.blockade})
-      : super(key: key);
+  const EditBlockadeScreen({super.key, required this.blockade});
 
   @override
   EditBlockadeScreenState createState() => EditBlockadeScreenState();

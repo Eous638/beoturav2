@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io'; // Import dart:io to check platform
+// Import dart:io to check platform
 import 'package:beotura/classes/organiser_location_class.dart';
 import 'package:beotura/classes/protest_alert_class.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +9,6 @@ import 'package:latlong2/latlong.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:beotura/services/combined_communication_service.dart';
-import '../providers/position_provider.dart';
 
 @pragma('vm:entry-point')
 void startCallback() {

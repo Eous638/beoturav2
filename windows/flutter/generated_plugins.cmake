@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   connectivity_plus
+  firebase_core
   geolocator_windows
   objectbox_flutter_libs
   url_launcher_windows

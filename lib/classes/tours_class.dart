@@ -7,21 +7,14 @@ class Tour extends CardItem {
   final List<Location> locations;
 
   Tour({
-    required String id,
-    required String title,
-    required String title_en,
-    required String description,
-    required String description_en,
-    required String imageUrl,
+    required super.id,
+    required super.title,
+    required super.title_en,
+    required super.description,
+    required super.description_en,
+    required super.imageUrl,
     required this.locations,
-  }) : super(
-          id: id,
-          title: title,
-          title_en: title_en,
-          description: description,
-          description_en: description_en,
-          imageUrl: imageUrl,
-        ) {
+  }) {
     locations.sort((a, b) => a.order.compareTo(b.order));
   }
 

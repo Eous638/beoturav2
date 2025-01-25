@@ -54,11 +54,11 @@ class FullScreenMapScreen extends ConsumerStatefulWidget {
   final String tourId; // Add this parameter
 
   const FullScreenMapScreen({
-    Key? key,
+    super.key,
     required this.sessionId,
     required this.tourId,
     this.isNavigation = true, // Default to true for navigation
-  }) : super(key: key);
+  });
 
   @override
   FullScreenMapScreenState createState() => FullScreenMapScreenState();

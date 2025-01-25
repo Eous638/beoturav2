@@ -18,6 +18,9 @@ class CombinedCommunicationService {
   DateTime? _lastLocationUpdate;
   static const Duration _locationUpdateThrottle = Duration(seconds: 4);
 
+  final Set<String> _receivedAlertKeys = {}; // Track received alert keys
+  final Set<String> _receivedNotificationKeys = {}; // Track received notification keys
+
   CombinedCommunicationService({
     required WidgetRef ref,
     required Function(OrganizerNotification) onNewNotification,
@@ -30,8 +33,14 @@ class CombinedCommunicationService {
   })  : _bleMeshService = BluetoothMeshService(),
         _webSocketService = ProtestWebSocketService(
           ref: ref,
-          onNewNotification: onNewNotification,
-          onNewAlert: onNewAlert,
+          onNewNotification: (notification) {
+            final key = '${notification.title}-${notification.location?.lat}-${notification.location?.lng}';
+            onNewNotification(notification);
+          },
+          onNewAlert: (alert) {
+            final key = '${alert.type}-${alert.location.lat}-${alert.location.lng}';
+            onNewAlert(alert);
+          },
           onYourAlert: onYourAlert,
           onAlertStopped: onAlertStopped,
           onStateUpdate: onStateUpdate,
@@ -41,8 +50,26 @@ class CombinedCommunicationService {
           onOrganizerRegistered: () {},
           onError: (String error) {},
         ) {
+          _webSocketService.onNewNotification = (notification) {
+            final key = '${notification.title}-${notification.location?.lat}-${notification.location?.lng}';
+            if (!_receivedNotificationKeys.contains(key)) {
+              _receivedNotificationKeys.add(key);
+              onNewNotification(notification);
+            }
+          };
+          _webSocketService.onNewAlert = (alert) {
+            final key = '${alert.type}-${alert.location.lat}-${alert.location.lng}';
+            if (!_receivedAlertKeys.contains(key)) {
+              _receivedAlertKeys.add(key);
+              onNewAlert(alert);
+            }
+          };
     _initialize();
   }
+
+  bool get isConnected => _isWebSocketConnected;
+
+  int get meshDeviceCount => _bleMeshService.connectedDeviceCount;
 
   void _initialize() {
     // Start BLE mesh service
@@ -54,7 +81,29 @@ class CombinedCommunicationService {
     // Monitor WebSocket connection status through the service
     _webSocketService.onConnectionStatusChanged = (bool isConnected) {
       _updateConnectionStatus(isConnected);
+      if (!isConnected) {
+        debugPrint('CombinedCommunicationService: WebSocket disconnected');
+      }
     };
+
+    // Register BLE mesh message handlers
+    _bleMeshService.registerMessageHandler('alert', (data) {
+      final alert = ProtestAlert.fromJson(data);
+      final key = '${alert.type}-${alert.location.lat}-${alert.location.lng}';
+      if (!_receivedAlertKeys.contains(key)) {
+        _receivedAlertKeys.add(key);
+        _webSocketService.onNewAlert(alert);
+      }
+    });
+
+    _bleMeshService.registerMessageHandler('notification', (data) {
+      final notification = OrganizerNotification.fromJson(data);
+      final key = '${notification.title}-${notification.location?.lat}-${notification.location?.lng}';
+      if (!_receivedNotificationKeys.contains(key)) {
+        _receivedNotificationKeys.add(key);
+        _webSocketService.onNewNotification(notification);
+      }
+    });
   }
 
   void startInForeground() {
@@ -129,12 +178,16 @@ class CombinedCommunicationService {
     };
 
     if (_isWebSocketConnected) {
-      _webSocketService.sendNotification(
-        title: title,
-        content: content,
-        severity: severity,
-        location: location,
-      );
+      try {
+        _webSocketService.sendNotification(
+          title: title,
+          content: content,
+          severity: severity,
+          location: location,
+        );
+      } catch (e) {
+        debugPrint('CombinedCommunicationService: WebSocket send failed: $e');
+      }
     }
     _bleMeshService.broadcastMessage('notification', notification);
   }
@@ -176,10 +229,14 @@ class CombinedCommunicationService {
 
   void stopAlert(String alertId) {
     if (_isWebSocketConnected) {
-      _webSocketService.channel.sink.add(jsonEncode({
-        "stop_alert": true,
-        "alert_id": alertId,
-      }));
+      try {
+        _webSocketService.channel.sink.add(jsonEncode({
+          "stop_alert": true,
+          "alert_id": alertId,
+        }));
+      } catch (e) {
+        debugPrint('CombinedCommunicationService: WebSocket send failed: $e');
+      }
     }
     // Send through BLE mesh as backup
     _bleMeshService.broadcastMessage('stop_alert', {
@@ -189,15 +246,23 @@ class CombinedCommunicationService {
 
   void sendToken(String token) {
     if (_isWebSocketConnected) {
-      debugPrint('CombinedCommunicationService: Sending auth token');
-      _webSocketService.sendToken(token);
+      try {
+        debugPrint('CombinedCommunicationService: Sending auth token');
+        _webSocketService.sendToken(token);
+      } catch (e) {
+        debugPrint('CombinedCommunicationService: WebSocket send failed: $e');
+      }
     }
   }
 
   void registerAsOrganizer() {
     if (_isWebSocketConnected) {
-      debugPrint('CombinedCommunicationService: Registering as organizer');
-      _webSocketService.registerAsOrganizer();
+      try {
+        debugPrint('CombinedCommunicationService: Registering as organizer');
+        _webSocketService.registerAsOrganizer();
+      } catch (e) {
+        debugPrint('CombinedCommunicationService: WebSocket send failed: $e');
+      }
     }
   }
 
@@ -223,10 +288,22 @@ class CombinedCommunicationService {
   }
 
   set onNewAlert(Function(ProtestAlert) handler) {
-    _webSocketService.onNewAlert = handler;
+    _webSocketService.onNewAlert = (alert) {
+      final key = '${alert.type}-${alert.location.lat}-${alert.location.lng}';
+      if (!_receivedAlertKeys.contains(key)) {
+        _receivedAlertKeys.add(key);
+        handler(alert);
+      }
+    };
   }
 
   set onNewNotification(Function(OrganizerNotification) handler) {
-    _webSocketService.onNewNotification = handler;
+    _webSocketService.onNewNotification = (notification) {
+      final key = '${notification.title}-${notification.location?.lat}-${notification.location?.lng}';
+      if (!_receivedNotificationKeys.contains(key)) {
+        _receivedNotificationKeys.add(key);
+        handler(notification);
+      }
+    };
   }
 }

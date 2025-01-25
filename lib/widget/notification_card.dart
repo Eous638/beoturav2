@@ -5,7 +5,7 @@ import 'package:timeago/timeago.dart' as timeago;
 class NotificationCard extends StatelessWidget {
   final OrganizerNotification notification;
 
-  const NotificationCard({required this.notification});
+  const NotificationCard({super.key, required this.notification});
 
   @override
   Widget build(BuildContext context) {

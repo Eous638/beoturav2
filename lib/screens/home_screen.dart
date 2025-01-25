@@ -19,7 +19,6 @@ import '../providers/language_provider.dart';
 import 'package:beotura/screens/live_protest_page.dart';
 import '../providers/auth_provider.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 
 class MapSample extends ConsumerStatefulWidget {
   const MapSample({super.key});
@@ -423,9 +422,15 @@ class MapTab extends ConsumerWidget {
             ),
             children: [
               TileLayer(
-                urlTemplate: 'http://88.99.137.223:8090/tiles/{z}/{x}/{y}.pbf',
+                urlTemplate:
+                    'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
                 subdomains: const ['a', 'b', 'c'],
                 userAgentPackageName: 'com.beotura.app',
+                tileProvider: FMTCTileProvider(
+                  stores: const {
+                    'mapStore': BrowseStoreStrategy.readUpdateCreate
+                  },
+                ),
               ),
               MarkerLayer(markers: markers),
               CurrentLocationLayer(),
@@ -448,10 +453,13 @@ class ProtestsTab extends ConsumerWidget {
 
   Future<void> _updateProtestStatus(BuildContext context, WidgetRef ref,
       String protestId, String status) async {
+    final token = ref.read(authProvider)?.token;
     try {
       final response = await Dio().put(
-        'https://api2.gladni.rs/api/beotura/update_protest_status/$protestId',
-        data: {'status': status},
+        'https://api2.gladni.rs/api/beotura/update_protest_status/$protestId?status=$status',
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
       );
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -469,44 +477,65 @@ class ProtestsTab extends ConsumerWidget {
   }
 
   Future<void> _addProtest(BuildContext context, WidgetRef ref) async {
+    final token = ref.read(authProvider)?.token;
     final titleController = TextEditingController();
     final aboutController = TextEditingController();
     final locationController = TextEditingController();
-    DateTime? selectedTime;
+    LatLng? selectedCoordinates;
+    DateTime? selectedDate;
+    TimeOfDay? selectedTime;
 
     await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text('Add Protest'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(labelText: 'Title'),
-              ),
-              TextField(
-                controller: aboutController,
-                decoration: const InputDecoration(labelText: 'About'),
-              ),
-              TextField(
-                controller: locationController,
-                decoration: const InputDecoration(labelText: 'Location'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  DatePicker.showDateTimePicker(
-                    context,
-                    showTitleActions: true,
-                    onConfirm: (date) {
-                      selectedTime = date;
-                    },
-                  );
-                },
-                child: const Text('Select Time'),
-              ),
-            ],
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(labelText: 'Title'),
+                ),
+                TextField(
+                  controller: aboutController,
+                  decoration: const InputDecoration(labelText: 'About'),
+                ),
+                TextField(
+                  controller: locationController,
+                  decoration: const InputDecoration(labelText: 'Location'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    selectedDate = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2101),
+                    );
+                    if (selectedDate != null) {
+                      selectedTime = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay.now(),
+                      );
+                    }
+                  },
+                  child: const Text('Select Date & Time'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    selectedCoordinates = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MapLocationPicker(),
+                      ),
+                    );
+                  },
+                  child: const Text('Select Location on Map'),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -518,22 +547,34 @@ class ProtestsTab extends ConsumerWidget {
                 if (titleController.text.isNotEmpty &&
                     aboutController.text.isNotEmpty &&
                     locationController.text.isNotEmpty &&
-                    selectedTime != null) {
+                    selectedDate != null &&
+                    selectedTime != null &&
+                    selectedCoordinates != null) {
+                  final selectedDateTime = DateTime(
+                    selectedDate!.year,
+                    selectedDate!.month,
+                    selectedDate!.day,
+                    selectedTime!.hour,
+                    selectedTime!.minute,
+                  );
                   try {
                     final response = await Dio().post(
                       'https://api2.gladni.rs/api/beotura/add_protest',
                       data: {
                         'title': titleController.text,
                         'about': aboutController.text,
-                        'time': selectedTime!.toIso8601String(),
+                        'time': selectedDateTime.toIso8601String(),
                         'location_name': locationController.text,
                         'coordinates': {
-                          'lat': 44.8176,
-                          'lon': 20.4633
-                        }, // Example coordinates
+                          'lat': selectedCoordinates!.latitude,
+                          'lon': selectedCoordinates!.longitude,
+                        },
                         'attendance': 0,
                         'status': 'scheduled',
                       },
+                      options: Options(
+                        headers: {'Authorization': 'Bearer $token'},
+                      ),
                     );
                     if (response.statusCode == 200) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -562,45 +603,69 @@ class ProtestsTab extends ConsumerWidget {
 
   Future<void> _editProtest(
       BuildContext context, WidgetRef ref, Protest protest) async {
+    final token = ref.read(authProvider)?.token;
     final titleController = TextEditingController(text: protest.title);
     final aboutController = TextEditingController(text: protest.about);
     final locationController =
         TextEditingController(text: protest.locationName);
-    DateTime? selectedTime = protest.time;
+    LatLng? selectedCoordinates =
+        LatLng(protest.coordinates.lat, protest.coordinates.lon);
+    DateTime? selectedDate = protest.time;
+    TimeOfDay? selectedTime = TimeOfDay.fromDateTime(protest.time);
 
     await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text('Edit Protest'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(labelText: 'Title'),
-              ),
-              TextField(
-                controller: aboutController,
-                decoration: const InputDecoration(labelText: 'About'),
-              ),
-              TextField(
-                controller: locationController,
-                decoration: const InputDecoration(labelText: 'Location'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  DatePicker.showDateTimePicker(
-                    context,
-                    showTitleActions: true,
-                    onConfirm: (date) {
-                      selectedTime = date;
-                    },
-                  );
-                },
-                child: const Text('Select Time'),
-              ),
-            ],
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(labelText: 'Title'),
+                ),
+                TextField(
+                  controller: aboutController,
+                  decoration: const InputDecoration(labelText: 'About'),
+                ),
+                TextField(
+                  controller: locationController,
+                  decoration: const InputDecoration(labelText: 'Location'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    selectedDate = await showDatePicker(
+                      context: context,
+                      initialDate: selectedDate!,
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2101),
+                    );
+                    if (selectedDate != null) {
+                      selectedTime = await showTimePicker(
+                        context: context,
+                        initialTime: selectedTime!,
+                      );
+                    }
+                  },
+                  child: const Text('Select Date & Time'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    selectedCoordinates = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MapLocationPicker(
+                          initialCoordinates: selectedCoordinates,
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('Select Location on Map'),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -612,22 +677,34 @@ class ProtestsTab extends ConsumerWidget {
                 if (titleController.text.isNotEmpty &&
                     aboutController.text.isNotEmpty &&
                     locationController.text.isNotEmpty &&
-                    selectedTime != null) {
+                    selectedDate != null &&
+                    selectedTime != null &&
+                    selectedCoordinates != null) {
+                  final selectedDateTime = DateTime(
+                    selectedDate!.year,
+                    selectedDate!.month,
+                    selectedDate!.day,
+                    selectedTime!.hour,
+                    selectedTime!.minute,
+                  );
                   try {
                     final response = await Dio().put(
                       'https://api2.gladni.rs/api/beotura/edit_protest/${protest.id}',
                       data: {
                         'title': titleController.text,
                         'about': aboutController.text,
-                        'time': selectedTime!.toIso8601String(),
+                        'time': selectedDateTime.toIso8601String(),
                         'location_name': locationController.text,
                         'coordinates': {
-                          'lat': protest.coordinates.lat,
-                          'lon': protest.coordinates.lon
+                          'lat': selectedCoordinates!.latitude,
+                          'lon': selectedCoordinates!.longitude,
                         },
                         'attendance': protest.attendance,
                         'status': protest.status,
                       },
+                      options: Options(
+                        headers: {'Authorization': 'Bearer $token'},
+                      ),
                     );
                     if (response.statusCode == 200) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -715,13 +792,6 @@ class ProtestsTab extends ConsumerWidget {
             Navigator.pop(context);
           },
         ),
-        actions: [
-          if (isLoggedIn)
-            IconButton(
-              icon: const Icon(Icons.add),
-              onPressed: () => _addProtest(context, ref),
-            ),
-        ],
       ),
       body: RefreshIndicator(
         onRefresh: () => _refreshProtests(context, ref),
@@ -744,6 +814,11 @@ class ProtestsTab extends ConsumerWidget {
                             'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
                         subdomains: const ['a', 'b', 'c'],
                         userAgentPackageName: 'com.beotura.app',
+                        tileProvider: FMTCTileProvider(
+                          stores: const {
+                            'mapStore': BrowseStoreStrategy.readUpdateCreate
+                          },
+                        ),
                       ),
                       MarkerLayer(
                         markers: [
@@ -934,6 +1009,76 @@ class ProtestsTab extends ConsumerWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class MapLocationPicker extends StatefulWidget {
+  final LatLng? initialCoordinates;
+
+  const MapLocationPicker({super.key, this.initialCoordinates});
+
+  @override
+  _MapLocationPickerState createState() => _MapLocationPickerState();
+}
+
+class _MapLocationPickerState extends State<MapLocationPicker> {
+  LatLng? _selectedCoordinates;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCoordinates = widget.initialCoordinates ??
+        LatLng(44.8176, 20.4633); // Default to Belgrade
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Select Location'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.check),
+            onPressed: () {
+              Navigator.pop(context, _selectedCoordinates);
+            },
+          ),
+        ],
+      ),
+      body: FlutterMap(
+        options: MapOptions(
+          initialCenter: _selectedCoordinates!,
+          initialZoom: 15,
+          onTap: (tapPosition, point) {
+            setState(() {
+              _selectedCoordinates = point;
+            });
+          },
+        ),
+        children: [
+          TileLayer(
+            urlTemplate:
+                'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+            subdomains: const ['a', 'b', 'c'],
+            userAgentPackageName: 'com.beotura.app',
+            tileProvider: FMTCTileProvider(
+              stores: const {'mapStore': BrowseStoreStrategy.readUpdateCreate},
+            ),
+          ),
+          MarkerLayer(
+            markers: [
+              Marker(
+                width: 40.0,
+                height: 40.0,
+                point: _selectedCoordinates!,
+                child:
+                    const Icon(Icons.location_on, color: Colors.red, size: 40),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

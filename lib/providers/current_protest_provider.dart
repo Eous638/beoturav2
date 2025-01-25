@@ -1,9 +1,34 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 final currentProtestProvider = FutureProvider<Protest>((ref) async {
-  final response = await Dio().get('https://api2.gladni.rs/api/beotura/current_protest');
-  return Protest.fromJson(response.data);
+  final prefs = await SharedPreferences.getInstance();
+  final storedProtest = prefs.getString('current_protest');
+
+  try {
+    final response =
+        await Dio().get('https://api2.gladni.rs/api/beotura/current_protest');
+    final protest = Protest.fromJson(response.data);
+
+    await prefs.setString('current_protest', jsonEncode(protest.toJson()));
+
+    return protest;
+  } catch (e) {
+    debugPrint('Failed to fetch latest protest data: $e');
+    if (storedProtest != null) {
+      final protest = Protest.fromJson(jsonDecode(storedProtest));
+      if (protest.time.isBefore(DateTime.now())) {
+        protest.status = 'active';
+      }
+      return protest;
+    } else {
+      throw Exception(
+          'No internet connection and no stored protest data available');
+    }
+  }
 });
 
 class Protest {
@@ -13,8 +38,8 @@ class Protest {
   final DateTime time;
   final String locationName;
   final Coordinates coordinates;
-  final int attendance;
-  final String status;
+  int attendance;
+  String status;
 
   Protest({
     required this.id,
@@ -39,6 +64,19 @@ class Protest {
       status: json['status'],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'title': title,
+      'about': about,
+      'time': time.toIso8601String(),
+      'location_name': locationName,
+      'coordinates': coordinates.toJson(),
+      'attendance': attendance,
+      'status': status,
+    };
+  }
 }
 
 class Coordinates {
@@ -52,5 +90,12 @@ class Coordinates {
       lat: json['lat'],
       lon: json['lon'],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'lat': lat,
+      'lon': lon,
+    };
   }
 }

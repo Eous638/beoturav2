@@ -17,11 +17,18 @@ import '../l10n/localization_helper.dart';
 import './providers/language_provider.dart';
 import './providers/position_provider.dart';
 import 'dart:io';
+import 'package:uuid/uuid.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:beotura/services/firebase_messaging_service.dart'; // Import FirebaseMessagingService
+import 'firebase_options.dart'; // Import Firebase options
 
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform, // Load Firebase options
+  );
 
   await FMTCObjectBoxBackend().initialise();
   await const FMTCStore('mapStore').manage.create();
@@ -84,12 +91,16 @@ class MyApp extends StatefulHookConsumerWidget {
 }
 
 class _MyAppState extends ConsumerState<MyApp> {
+  late FirebaseMessagingService _firebaseMessagingService;
+
   @override
   void initState() {
     super.initState();
     getLanguage();
     _requestPermissions();
     _initService();
+    _initializeUUID();
+    _firebaseMessagingService = FirebaseMessagingService(); // Initialize FCM service
   }
 
   Future<void> getLanguage() async {
@@ -148,6 +159,16 @@ class _MyAppState extends ConsumerState<MyApp> {
         allowWifiLock: true,
       ),
     );
+  }
+
+  Future<void> _initializeUUID() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? uuid = prefs.getString('device_uuid');
+    if (uuid == null) {
+      uuid = const Uuid().v4();
+      await prefs.setString('device_uuid', uuid);
+    }
+    debugPrint('Device UUID: $uuid');
   }
 
   final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();

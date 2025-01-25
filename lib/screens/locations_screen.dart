@@ -7,8 +7,8 @@ import '../l10n/localization_helper.dart';
 
 class LocationScreen extends ConsumerWidget {
   const LocationScreen({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

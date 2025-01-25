@@ -26,6 +26,7 @@ import '../services/foreground_task_service.dart';
 import 'package:beotura/widget/notification_card.dart';
 import 'package:beotura/services/ble_mesh_service.dart'; // Import BLE mesh service
 import 'package:beotura/services/combined_communication_service.dart'; // Import CombinedCommunicationService
+import 'package:beotura/services/speed_test_service.dart'; // Import SpeedTestService
 
 class LiveProtestPage extends ConsumerStatefulWidget {
   final Protest protest;
@@ -53,6 +54,10 @@ class _LiveProtestPageState extends ConsumerState<LiveProtestPage>
   LatLng? userSelectedLocation; // Track user selected location
   late ProtestAlertService _alertService;
   late ProtestNotificationsService _notificationsService;
+  late SpeedTestService _speedTestService;
+  double _connectionSpeed = 0.0;
+  bool _isConnectionUsable = false;
+  int _meshDeviceCount = 0;
 
   @override
   void initState() {
@@ -61,12 +66,19 @@ class _LiveProtestPageState extends ConsumerState<LiveProtestPage>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
+    _speedTestService = SpeedTestService();
     _initializeCommunicationService();
     initializeLocation(); // Use real location updates
     _alertService = ProtestAlertService(
       webSocketService: _communicationService,
       context: context,
     );
+
+    // Perform initial speed test
+    _performSpeedTest();
+
+    // Schedule periodic speed tests
+    Timer.periodic(const Duration(minutes: 5), (_) => _performSpeedTest());
 
     // Remove ForegroundTaskService initialization as it's now handled by CombinedCommunicationService
     // ForegroundTaskService.startForegroundTask(ref); // Remove this line
@@ -94,6 +106,41 @@ class _LiveProtestPageState extends ConsumerState<LiveProtestPage>
         });
       }
     };
+  }
+
+  Future<void> _performSpeedTest() async {
+    try {
+      final isUsable = await _speedTestService.isConnectionUsable();
+      if (mounted) {
+        setState(() {
+          _isConnectionUsable = isUsable;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error performing speed test: $e');
+    }
+  }
+
+  IconData _getConnectionQualityIcon() {
+    return _isConnectionUsable ? Icons.signal_wifi_4_bar : Icons.signal_wifi_off;
+  }
+
+  Widget _buildUserCountIcon() {
+    if (_isConnectionUsable && _communicationService.isConnected) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: Text('👥 $activeUsers'),
+        ),
+      );
+    } else {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: Text('🔗 $_meshDeviceCount'),
+        ),
+      );
+    }
   }
 
   void _initializeCommunicationService() {
@@ -149,6 +196,15 @@ class _LiveProtestPageState extends ConsumerState<LiveProtestPage>
       _communicationService.sendToken(user.token);
       _communicationService.registerAsOrganizer();
     }
+
+    // Update mesh device count periodically
+    Timer.periodic(const Duration(seconds: 10), (_) {
+      if (mounted) {
+        setState(() {
+          _meshDeviceCount = _communicationService.meshDeviceCount;
+        });
+      }
+    });
   }
 
   @override
@@ -295,23 +351,21 @@ class _LiveProtestPageState extends ConsumerState<LiveProtestPage>
   }
 
   void _vibrate(String severity) {
-    if (Vibration.hasVibrator() != null) {
-      switch (severity) {
-        case 'urgent':
-          Vibration.vibrate(
-              pattern: [0, 500, 200, 500, 200, 500],
-              intensities: [255, 255, 255]);
-          break;
-        case 'warning':
-          Vibration.vibrate(
-              pattern: [0, 500, 200, 500], intensities: [128, 128]);
-          break;
-        default:
-          Vibration.vibrate(pattern: [0, 500], intensities: [64]);
-          break;
-      }
+    switch (severity) {
+      case 'urgent':
+        Vibration.vibrate(
+            pattern: [0, 500, 200, 500, 200, 500],
+            intensities: [255, 255, 255]);
+        break;
+      case 'warning':
+        Vibration.vibrate(
+            pattern: [0, 500, 200, 500], intensities: [128, 128]);
+        break;
+      default:
+        Vibration.vibrate(pattern: [0, 500], intensities: [64]);
+        break;
     }
-  }
+    }
 
   void _showNotification(String message, {String severity = 'info'}) {
     _vibrate(severity);
@@ -464,14 +518,10 @@ class _LiveProtestPageState extends ConsumerState<LiveProtestPage>
           ),
           title: Text(widget.protest.title),
           actions: [
-            // Show active users count
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Text('👥 $activeUsers'),
-              ),
-            ),
-
+            // Show active users count or mesh device count
+            _buildUserCountIcon(),
+            // Connection quality icon
+            Icon(_getConnectionQualityIcon()),
             IconButton(
               icon: Stack(
                 children: [
@@ -645,7 +695,7 @@ class _LiveProtestPageState extends ConsumerState<LiveProtestPage>
     String severity = 'info';
     LatLng? notificationLocation;
 
-    void _onLocationSelected(LatLng location) {
+    void onLocationSelected(LatLng location) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         setState(() {
           notificationLocation = location;
@@ -695,7 +745,7 @@ class _LiveProtestPageState extends ConsumerState<LiveProtestPage>
                 onPressed: () async {
                   final selectedLocation = await _selectLocationOnMap();
                   if (selectedLocation != null) {
-                    _onLocationSelected(selectedLocation);
+                    onLocationSelected(selectedLocation);
                   }
                 },
                 child: const Text('Add Location'),

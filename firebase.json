@@ -1,0 +1,1 @@
+{"flutter":{"platforms":{"android":{"default":{"projectId":"beotura-app","appId":"1:662611760355:android:36c166e1cb6027b048a1d6","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"beotura-app","configurations":{"android":"1:662611760355:android:36c166e1cb6027b048a1d6","ios":"1:662611760355:ios:cbe50242038b423348a1d6"}}}}}}

@@ -8,6 +8,7 @@ import '../classes/protest_alert_class.dart';
 import '../classes/organiser_location_class.dart';
 import '../classes/protest_location_class.dart';
 import 'package:beotura/services/ble_mesh_service.dart'; // Import BLE mesh service
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProtestWebSocketService {
   late WebSocketChannel channel;
@@ -45,7 +46,7 @@ class ProtestWebSocketService {
     required this.onError,
   });
 
-  void connect() {
+  void connect() async {
     if (_disposed) return;
 
     debugPrint('WebSocketService: Attempting to connect to WebSocket');
@@ -57,6 +58,16 @@ class ProtestWebSocketService {
       debugPrint('WebSocketService: WebSocket connection established');
       _updateConnectionStatus(true);
 
+      // Send raw UUID from shared_preferences as the first message
+      final prefs = await SharedPreferences.getInstance();
+      final uuid = prefs.getString('device_uuid') ?? '';
+      if (uuid.isNotEmpty) {
+        channel.sink.add(jsonEncode({'protest_id': uuid}));
+        debugPrint('WebSocketService: Sent UUID: $uuid');
+      } else {
+        debugPrint('WebSocketService: UUID not found in shared_preferences');
+      }
+
       _streamSubscription = channel.stream.listen(
         (message) {
           debugPrint('WebSocketService: Received message: $message');
@@ -67,6 +78,7 @@ class ProtestWebSocketService {
         onError: (error) {
           debugPrint('WebSocket error: $error');
           _updateConnectionStatus(false);
+          onError('WebSocket error: $error');
           if (!_disposed) {
             Future.delayed(const Duration(seconds: 5), connect);
           }
@@ -74,6 +86,7 @@ class ProtestWebSocketService {
         onDone: () {
           debugPrint('WebSocketService: Connection closed');
           _updateConnectionStatus(false);
+          onError('WebSocket connection closed');
           if (!_disposed) {
             Future.delayed(const Duration(seconds: 5), connect);
           }
@@ -81,9 +94,17 @@ class ProtestWebSocketService {
       );
 
       _requestInitialState();
+    } on WebSocketChannelException catch (e) {
+      debugPrint('WebSocketService: WebSocketChannelException: $e');
+      _updateConnectionStatus(false);
+      onError('WebSocket connection failed: $e');
+      if (!_disposed) {
+        Future.delayed(const Duration(seconds: 5), connect);
+      }
     } catch (e) {
       debugPrint('WebSocketService: Connection error: $e');
       _updateConnectionStatus(false);
+      onError('WebSocket connection failed: $e');
       if (!_disposed) {
         Future.delayed(const Duration(seconds: 5), connect);
       }
@@ -98,15 +119,6 @@ class ProtestWebSocketService {
   bool get isConnected => _isConnected;
 
   void sendAlert({required String type, required LatLng location}) {
-    if (!_isConnected) {
-      debugPrint(
-          'WebSocketService: Cannot send alert - WebSocket not connected');
-      throw Exception('WebSocket not connected');
-    }
-
-    debugPrint(
-        'WebSocketService: Sending alert - Type: $type, Location: $location');
-
     final alertData = {
       'alert': {
         'type': type,
@@ -117,20 +129,18 @@ class ProtestWebSocketService {
       }
     };
 
-    try {
-      final jsonString = jsonEncode(alertData);
-      debugPrint('WebSocketService: Sending JSON: $jsonString');
-
-      if (channel.sink == null) {
-        debugPrint('WebSocketService: Sink is null');
-        throw Exception('WebSocket sink is null');
+    if (_isConnected) {
+      try {
+        final jsonString = jsonEncode(alertData);
+        channel.sink.add(jsonString);
+        debugPrint('WebSocketService: Alert sent successfully');
+      } catch (e) {
+        debugPrint('WebSocketService: Error sending alert: $e');
+        _bleMeshService.broadcastMessage('alert', alertData);
       }
-
-      channel.sink.add(jsonString);
-      debugPrint('WebSocketService: Alert sent successfully');
-    } catch (e) {
-      debugPrint('WebSocketService: Error sending alert: $e');
-      throw Exception('Failed to send alert: $e');
+    } else {
+      debugPrint('WebSocketService: WebSocket not connected, using BLE mesh');
+      _bleMeshService.broadcastMessage('alert', alertData);
     }
   }
 
@@ -150,9 +160,18 @@ class ProtestWebSocketService {
           'lng': location.longitude,
         },
     };
-    channel.sink.add(jsonEncode({'notification': notification}));
-    _bleMeshService.broadcastMessage(
-        'notification', notification); // Send notification via BLE mesh service
+
+    if (_isConnected) {
+      try {
+        channel.sink.add(jsonEncode({'notification': notification}));
+      } catch (e) {
+        debugPrint('WebSocketService: Error sending notification: $e');
+        _bleMeshService.broadcastMessage('notification', notification);
+      }
+    } else {
+      debugPrint('WebSocketService: WebSocket not connected, using BLE mesh');
+      _bleMeshService.broadcastMessage('notification', notification);
+    }
   }
 
   void _handleWebSocketMessage(dynamic message) {
@@ -220,11 +239,23 @@ class ProtestWebSocketService {
   }
 
   void sendToken(String token) {
-    channel.sink.add(jsonEncode({'token': token}));
+    if (_isConnected) {
+      try {
+        channel.sink.add(jsonEncode({'token': token}));
+      } catch (e) {
+        debugPrint('WebSocketService: Error sending token: $e');
+      }
+    }
   }
 
   void registerAsOrganizer() {
-    channel.sink.add(jsonEncode({'register_organizer': true}));
+    if (_isConnected) {
+      try {
+        channel.sink.add(jsonEncode({'register_organizer': true}));
+      } catch (e) {
+        debugPrint('WebSocketService: Error registering as organizer: $e');
+      }
+    }
   }
 
   void startInForeground() {
@@ -234,10 +265,10 @@ class ProtestWebSocketService {
   void dispose() {
     debugPrint('WebSocketService: Disposing...');
     _disposed = true;
-    
+
     // Cancel stream subscription first
     _streamSubscription?.cancel();
-    
+
     // Send disconnect message if connected
     if (_isConnected) {
       try {
@@ -247,7 +278,7 @@ class ProtestWebSocketService {
         debugPrint('WebSocketService: Error sending disconnect message: $e');
       }
     }
-    
+
     // Close the channel
     try {
       debugPrint('WebSocketService: Closing WebSocket channel');
@@ -255,7 +286,7 @@ class ProtestWebSocketService {
     } catch (e) {
       debugPrint('WebSocketService: Error closing WebSocket channel: $e');
     }
-    
+
     _updateConnectionStatus(false);
   }
 }

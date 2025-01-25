@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "662611760355",
+    "project_id": "beotura-app",
+    "storage_bucket": "beotura-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:662611760355:android:36c166e1cb6027b048a1d6",
+        "android_client_info": {
+          "package_name": "com.beotura.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAmJ3rvMI4UWcTGf7m-fs3cj0dqXYIIJ8A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

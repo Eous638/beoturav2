@@ -168,4 +168,6 @@ class BluetoothMeshService {
     _connectedDevices.clear();
     await FlutterBluePlus.stopScan();
   }
+
+  int get connectedDeviceCount => _connectedDevices.length;
 }

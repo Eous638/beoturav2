@@ -126,7 +126,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
       ),
       body: Column(
         children: [
-          Container(
+          SizedBox(
             height: MediaQuery.of(context).size.height / 3,
             child: FlutterMap(
               options: MapOptions(

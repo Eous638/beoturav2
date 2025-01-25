@@ -1,7 +1,5 @@
-import 'package:beotura/classes/loactions_class.dart';
 import 'package:beotura/classes/organiser_location_class.dart';
 import 'package:beotura/classes/protest_location_class.dart';
-import 'package:beotura/screens/live_protest_page.dart';
 import 'package:flutter/material.dart';
 
 class ProtestAlert {
