@@ -281,6 +281,10 @@ class CombinedCommunicationService {
     _isWebSocketConnected = false;
   }
 
+  void terminateConnections() {
+    dispose();
+  }
+
   void _updateConnectionStatus(bool isConnected) {
     if (!_disposed) {
       _isWebSocketConnected = isConnected;

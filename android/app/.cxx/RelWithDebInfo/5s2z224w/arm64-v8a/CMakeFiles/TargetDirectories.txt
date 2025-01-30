@@ -1,0 +1,2 @@
+E:/beoturav2/android/app/.cxx/RelWithDebInfo/5s2z224w/arm64-v8a/CMakeFiles/edit_cache.dir
+E:/beoturav2/android/app/.cxx/RelWithDebInfo/5s2z224w/arm64-v8a/CMakeFiles/rebuild_cache.dir

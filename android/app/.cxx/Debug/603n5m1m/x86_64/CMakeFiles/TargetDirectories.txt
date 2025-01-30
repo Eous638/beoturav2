@@ -1,0 +1,2 @@
+E:/beoturav2/android/app/.cxx/Debug/603n5m1m/x86_64/CMakeFiles/edit_cache.dir
+E:/beoturav2/android/app/.cxx/Debug/603n5m1m/x86_64/CMakeFiles/rebuild_cache.dir

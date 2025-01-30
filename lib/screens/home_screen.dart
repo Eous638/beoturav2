@@ -1,9 +1,13 @@
+import 'dart:convert';
+
 import 'package:beotura/enums/language_enum.dart';
 import 'package:beotura/providers/current_protest_provider.dart';
 import 'package:beotura/providers/tour_provider.dart';
 import 'package:beotura/screens/add_blockade_screen.dart';
 import 'package:beotura/screens/blockade_details_screen.dart';
 import 'package:beotura/screens/login_page.dart';
+import 'package:beotura/services/firebase_messaging_service.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
@@ -30,10 +34,67 @@ class MapSample extends ConsumerStatefulWidget {
 class _MapSampleState extends ConsumerState<MapSample> {
   List<Marker> markers = [];
   late final MapController _mapController = MapController();
+  late final FirebaseMessagingService _firebaseMessagingService;
 
   @override
   void initState() {
     super.initState();
+    _firebaseMessagingService = FirebaseMessagingService();
+    _configureSelectNotificationSubject();
+  }
+
+  void _configureSelectNotificationSubject() {
+    _firebaseMessagingService.flutterLocalNotificationsPlugin.initialize(
+      const InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/launcher_icon'),
+      ),
+      onDidReceiveNotificationResponse:
+          (NotificationResponse notificationResponse) async {
+        final String? payload = notificationResponse.payload;
+        if (payload != null) {
+          final data = jsonDecode(payload);
+          switch (data['type']) {
+            case 'notification':
+              _showNotificationDialog(data);
+              break;
+            case 'protest_status_update':
+              _navigateToProtestTab(data);
+            case 'new_protest':
+              _navigateToProtestTab(data);
+              break;
+          }
+        }
+      },
+    );
+  }
+
+  void _navigateToProtestTab(Map<String, dynamic> data) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ProtestsTab(),
+      ),
+    );
+  }
+
+  void _showNotificationDialog(Map<String, dynamic> data) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(data['title']),
+          content: Text(data['content']),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   final _tileProvider = FMTCTileProvider(
@@ -151,6 +212,7 @@ class _MapSampleState extends ConsumerState<MapSample> {
           initialCenter: LatLng(44.8176, 20.4633), // Center of Belgrade
           initialZoom: 15,
         ),
+        
         children: [
           TileLayer(
             urlTemplate:

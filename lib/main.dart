@@ -21,6 +21,7 @@ import 'package:uuid/uuid.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:beotura/services/firebase_messaging_service.dart'; // Import FirebaseMessagingService
 import 'firebase_options.dart'; // Import Firebase options
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -29,6 +30,9 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform, // Load Firebase options
   );
+
+  // Initialize Firebase Crashlytics
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
 
   await FMTCObjectBoxBackend().initialise();
   await const FMTCStore('mapStore').manage.create();

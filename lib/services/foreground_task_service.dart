@@ -75,7 +75,8 @@ class MyTaskHandler extends TaskHandler {
   }
 
   static void sendAlert({required String type, required LatLng location}) {
-    print('MyTaskHandler.sendAlert called with type: $type, location: $location');
+    print(
+        'MyTaskHandler.sendAlert called with type: $type, location: $location');
     _communicationService?.sendAlert(type: type, location: location);
   }
 
@@ -109,6 +110,10 @@ class MyTaskHandler extends TaskHandler {
       Function(OrganizerNotification) onNewNotification) {
     _communicationService?.onNewNotification = onNewNotification;
   }
+
+  static void terminateConnections() {
+    _communicationService?.terminateConnections();
+  }
 }
 
 class ForegroundTaskService {
@@ -128,7 +133,8 @@ class ForegroundTaskService {
 
   static Future<void> sendAlert(
       {required String type, required LatLng location}) async {
-    print('ForegroundTaskService.sendAlert called with type: $type, location: $location');
+    print(
+        'ForegroundTaskService.sendAlert called with type: $type, location: $location');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       print('ForegroundTaskService.sendAlert post frame callback');
       MyTaskHandler.sendAlert(type: type, location: location);
@@ -152,7 +158,8 @@ class ForegroundTaskService {
   static void sendLocationUpdate(Position position) {
     // Remove this method or modify to use CombinedCommunicationService instead
     // of sending directly
-    debugPrint('ForegroundTaskService: Location updates should go through CombinedCommunicationService');
+    debugPrint(
+        'ForegroundTaskService: Location updates should go through CombinedCommunicationService');
   }
 
   static void stopAlert(String alertId) {

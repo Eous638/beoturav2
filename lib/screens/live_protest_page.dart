@@ -122,7 +122,9 @@ class _LiveProtestPageState extends ConsumerState<LiveProtestPage>
   }
 
   IconData _getConnectionQualityIcon() {
-    return _isConnectionUsable ? Icons.signal_wifi_4_bar : Icons.signal_wifi_off;
+    return _isConnectionUsable
+        ? Icons.signal_wifi_4_bar
+        : Icons.signal_wifi_off;
   }
 
   Widget _buildUserCountIcon() {
@@ -358,14 +360,13 @@ class _LiveProtestPageState extends ConsumerState<LiveProtestPage>
             intensities: [255, 255, 255]);
         break;
       case 'warning':
-        Vibration.vibrate(
-            pattern: [0, 500, 200, 500], intensities: [128, 128]);
+        Vibration.vibrate(pattern: [0, 500, 200, 500], intensities: [128, 128]);
         break;
       default:
         Vibration.vibrate(pattern: [0, 500], intensities: [64]);
         break;
     }
-    }
+  }
 
   void _showNotification(String message, {String severity = 'info'}) {
     _vibrate(severity);
@@ -553,6 +554,13 @@ class _LiveProtestPageState extends ConsumerState<LiveProtestPage>
               ),
               onPressed: () => _showNotificationScreen(context),
             ),
+            IconButton(
+              icon: const Icon(Icons.settings_power_rounded),
+              onPressed: () {
+                ForegroundTaskService.stopForegroundTask();
+                Navigator.pop(context);
+              },
+            ),
           ],
         ),
         extendBodyBehindAppBar: true,
@@ -580,6 +588,15 @@ class _LiveProtestPageState extends ConsumerState<LiveProtestPage>
                   markers: _buildMarkers(),
                 ),
               ],
+            ),
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  ForegroundTaskService.stopForegroundTask();
+                  Navigator.pop(context);
+                },
+                child: const Text('Disconnect and Stop'),
+              ),
             ),
           ],
         ),
