@@ -58,7 +58,6 @@ class _MapSampleState extends ConsumerState<MapSample> {
               _showNotificationDialog(data);
               break;
             case 'protest_status_update':
-              _navigateToProtestTab(data);
             case 'new_protest':
               _navigateToProtestTab(data);
               break;
@@ -212,7 +211,6 @@ class _MapSampleState extends ConsumerState<MapSample> {
           initialCenter: LatLng(44.8176, 20.4633), // Center of Belgrade
           initialZoom: 15,
         ),
-        
         children: [
           TileLayer(
             urlTemplate:

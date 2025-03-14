@@ -9,6 +9,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:beotura/services/combined_communication_service.dart';
+import '../providers/current_protest_provider.dart';
 
 @pragma('vm:entry-point')
 void startCallback() {
@@ -117,9 +118,14 @@ class MyTaskHandler extends TaskHandler {
 }
 
 class ForegroundTaskService {
-  static void startForegroundTask(WidgetRef ref) {
-    // Remove the initialization here as it's now handled in LiveProtestPage
-    // MyTaskHandler.initializeCommunicationService(ref);
+  static Future<void> startForegroundTask(WidgetRef ref) async {
+    // Check if there is an active protest
+    final protest = await ref.read(currentProtestProvider.future);
+    if (protest.status != 'active') {
+      debugPrint('ForegroundTaskService: No active protest, not starting service');
+      return;
+    }
+
     FlutterForegroundTask.startService(
       notificationTitle: 'Active Protest',
       notificationText: 'Communicating with other users',
@@ -129,6 +135,7 @@ class ForegroundTaskService {
 
   static void stopForegroundTask() {
     FlutterForegroundTask.stopService();
+    MyTaskHandler.terminateConnections();
   }
 
   static Future<void> sendAlert(

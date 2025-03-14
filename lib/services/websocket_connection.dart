@@ -118,29 +118,18 @@ class ProtestWebSocketService {
 
   bool get isConnected => _isConnected;
 
-  void sendAlert({required String type, required LatLng location}) {
-    final alertData = {
-      'alert': {
-        'type': type,
-        'location': {
-          'lat': location.latitude,
-          'lng': location.longitude,
-        }
-      }
-    };
-
+  void sendAlert(String type, LatLng location) {
     if (_isConnected) {
       try {
-        final jsonString = jsonEncode(alertData);
-        channel.sink.add(jsonString);
+        channel.sink.add(jsonEncode({'type': type, 'location': location}));
         debugPrint('WebSocketService: Alert sent successfully');
       } catch (e) {
         debugPrint('WebSocketService: Error sending alert: $e');
-        _bleMeshService.broadcastMessage('alert', alertData);
+        _bleMeshService.broadcastMessage('alert', {'type': type, 'location': location});
       }
     } else {
       debugPrint('WebSocketService: WebSocket not connected, using BLE mesh');
-      _bleMeshService.broadcastMessage('alert', alertData);
+      _bleMeshService.broadcastMessage('alert', {'type': type, 'location': location});
     }
   }
 

@@ -116,11 +116,6 @@ class CombinedCommunicationService {
   }
 
   void sendAlert({required String type, required LatLng location}) {
-    debugPrint(
-        'CombinedCommunicationService: Sending alert - Type: $type, Location: $location');
-    debugPrint(
-        'CombinedCommunicationService: WebSocket connected: $_isWebSocketConnected');
-
     final alertData = {
       'type': type,
       'location': {
@@ -129,35 +124,16 @@ class CombinedCommunicationService {
       },
     };
 
-    bool webSocketSent = false;
-
-    // Try WebSocket first
     if (_isWebSocketConnected) {
       try {
-        debugPrint('CombinedCommunicationService: Sending via WebSocket');
         _webSocketService.sendAlert(type: type, location: location);
-        webSocketSent = true;
-        debugPrint(
-            'CombinedCommunicationService: Successfully sent via WebSocket');
       } catch (e) {
-        debugPrint('CombinedCommunicationService: WebSocket send failed: $e');
-        _isWebSocketConnected = false; // Mark as disconnected on error
+        debugPrint('WebSocket send failed: $e');
+        _isWebSocketConnected = false;
       }
-    } else {
-      debugPrint('CombinedCommunicationService: WebSocket not connected');
     }
 
-    // Always send through BLE mesh as backup
-    try {
-      debugPrint('CombinedCommunicationService: Sending via BLE mesh');
-      _bleMeshService.broadcastMessage('alert', alertData);
-    } catch (e) {
-      debugPrint('CombinedCommunicationService: BLE mesh send failed: $e');
-      if (!webSocketSent) {
-        // If both methods failed, throw error
-        throw Exception('Failed to send alert through any channel');
-      }
-    }
+    _bleMeshService.broadcastMessage('alert', alertData);
   }
 
   void sendNotification({
@@ -193,7 +169,6 @@ class CombinedCommunicationService {
   }
 
   void sendLocationUpdate(Position position) {
-    // Throttle updates to prevent rapid firing
     final now = DateTime.now();
     if (_lastLocationUpdate != null &&
         now.difference(_lastLocationUpdate!) < _locationUpdateThrottle) {
@@ -210,21 +185,13 @@ class CombinedCommunicationService {
 
     if (_isWebSocketConnected) {
       try {
-        debugPrint('CombinedCommunicationService: Sending location update');
-        _webSocketService.channel.sink.add(jsonEncode(locationData));
+        _webSocketService.sendLocationUpdate(position);
       } catch (e) {
-        debugPrint(
-            'CombinedCommunicationService: Error sending location update: $e');
+        debugPrint('Error sending location update: $e');
       }
     }
 
-    // Send through BLE mesh as backup
-    try {
-      _bleMeshService.broadcastMessage('location', locationData['location']!);
-    } catch (e) {
-      debugPrint(
-          'CombinedCommunicationService: Error sending location via BLE: $e');
-    }
+    _bleMeshService.broadcastMessage('location', locationData['location']!);
   }
 
   void stopAlert(String alertId) {
@@ -267,17 +234,10 @@ class CombinedCommunicationService {
   }
 
   void dispose() {
-    debugPrint('CombinedCommunicationService: Disposing...');
-    _disposed = true;
-    // First stop the BLE service
     _bleMeshService.dispose();
-    
-    // Then close WebSocket connection
     if (_isWebSocketConnected) {
-      debugPrint('CombinedCommunicationService: Closing WebSocket connection');
       _webSocketService.dispose();
     }
-    
     _isWebSocketConnected = false;
   }
 

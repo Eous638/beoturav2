@@ -31,10 +31,6 @@ class FirebaseMessagingService {
     // Get the FCM token
     String? token = await _firebaseMessaging.getToken();
     print("FCM Token: $token");
-
-    if (token != null) {
-      _sendTokenToServer(token);
-    }
   }
 
   FlutterLocalNotificationsPlugin get flutterLocalNotificationsPlugin =>
