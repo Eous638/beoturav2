@@ -1,44 +1,52 @@
 import 'package:flutter/material.dart';
-import "package:beotura/widget/list_widget.dart";
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/tour_provider.dart';
+import '../providers/location_provider.dart';
 import '../classes/loactions_class.dart';
 import '../l10n/localization_helper.dart';
+import '../widget/list_widget.dart'; // Import the card widget
 
-class LocationScreen extends ConsumerWidget {
-  const LocationScreen({
-    super.key,
-  });
+class LocationsScreen extends ConsumerWidget {
+  const LocationsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<List<Location>> locations =
         ref.watch(locationProviderProvider);
-    final l10n = LocalizationHelper(ref);
 
     return Scaffold(
       appBar: AppBar(
-          title: Text(
-        l10n.translate('locations'),
-      )),
+        title: Text(LocalizationHelper(ref).translate('Locations')),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
       body: locations.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text('Error: $error')),
-        // ignore: avoid_types_as_parameter_names, non_constant_identifier_names
-        data: (Location) => Location.isEmpty
+        error: (error, stackTrace) => Center(
+          child: Text(
+            'Error: $error',
+            style: const TextStyle(color: Colors.red),
+          ),
+        ),
+        data: (locationsData) => locationsData.isEmpty
             ? const Center(
-                child: Text('No Tours Found')) // Handle empty data case
-            : ListView.builder(
-                itemCount: Location.length, // No need for '?' here
-                itemBuilder: (context, index) {
-                  final location = Location[index]; // Already have the data
-                  return ListCard(
-                    item: location,
-                    latitude: location.latitude,
-                    longitude: location.longitude,
-                    isTour: false, // Ensure isTour is false
-                  ); // No '!' needed
-                },
+                child: Text(
+                  'No Locations Found',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                ),
+              )
+            : Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: ListView.builder(
+                  itemCount: locationsData.length,
+                  itemBuilder: (context, index) {
+                    final location = locationsData[index];
+                    return ListCard(
+                      item: location,
+                      isTour: false, // Set isTour to false for locations
+                    );
+                  },
+                ),
               ),
       ),
     );

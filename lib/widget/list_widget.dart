@@ -39,12 +39,12 @@ class ListCard extends ConsumerWidget {
             MaterialPageRoute(
               builder: (context) => DetailsScreen(
                 title: currentLanguage == Language.english
-                    ? item.title_en
-                    : item.title,
-                imageUrl: item.imageUrl,
+                    ? (item.title_en ?? 'Default Title')
+                    : (item.title ?? 'Default Title'),
+                imageUrl: item.imageUrl ?? 'https://via.placeholder.com/150',
                 text: currentLanguage == Language.english
-                    ? item.description_en
-                    : item.description,
+                    ? (item.description_en ?? 'Default Description')
+                    : (item.description ?? 'Default Description'),
                 locations: locations,
                 tourId: item.id,
                 isTour: isTour, // Pass the isTour parameter
@@ -63,7 +63,8 @@ class ListCard extends ConsumerWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(25),
               image: DecorationImage(
-                image: NetworkImage(item.imageUrl),
+                image: NetworkImage(
+                    item.imageUrl ?? 'https://via.placeholder.com/150'),
                 fit: BoxFit.cover,
                 opacity: 0.6,
               ),
@@ -72,8 +73,8 @@ class ListCard extends ConsumerWidget {
             child: Center(
               child: Text(
                 currentLanguage == Language.english
-                    ? item.title_en
-                    : item.title,
+                    ? (item.title_en ?? 'Default Title')
+                    : (item.title ?? 'Default Title'),
                 style: const TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.bold,

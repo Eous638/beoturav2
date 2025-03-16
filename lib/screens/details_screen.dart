@@ -8,7 +8,6 @@ import '../classes/loactions_class.dart';
 import '../enums/language_enum.dart';
 import '../l10n/localization_helper.dart';
 import '../providers/language_provider.dart';
-import './navigation_screen.dart';
 import 'package:geolocator/geolocator.dart';
 // Import the full screen map screen
 
@@ -70,21 +69,7 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => NavigationScreen(
-            sessionId: data['session_id'],
-            totalPlaces: data['total_places'],
-            orderedPlaces: data['ordered_places'],
-            nextPlace: data['next_place'],
-            totalDistanceKm: data['total_distance_km'],
-            totalDurationMin: data['total_duration_min'],
-            fullTourPolyline: data['full_tour_polyline'],
-            tourId: widget.tourId,
-          ),
-        ),
-      );
+      
     } else {
       throw Exception('Failed to start tour');
     }
@@ -148,7 +133,7 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
                                       title: currentLanguage == Language.english
                                           ? location.title_en
                                           : location.title,
-                                      imageUrl: location.imageUrl,
+                                      imageUrl: location.imageUrl ?? '',
                                       text: currentLanguage == Language.english
                                           ? location.description_en
                                           : location.description,
@@ -167,7 +152,7 @@ class _DetailsScreenState extends ConsumerState<DetailsScreen> {
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(50),
                                     child: Image.network(
-                                      location.imageUrl,
+                                      location.imageUrl ?? '',
                                       fit: BoxFit.cover,
                                       cacheWidth: 300,
                                       cacheHeight: 300,

@@ -6,22 +6,6 @@ part of 'tour_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$tourProviderHash() => r'0c93d84f30118766c0ef8f432d3189ec0078bb70';
-
-/// See also [tourProvider].
-@ProviderFor(tourProvider)
-final tourProviderProvider = AutoDisposeFutureProvider<List<Tour>>.internal(
-  tourProvider,
-  name: r'tourProviderProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$tourProviderHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef TourProviderRef = AutoDisposeFutureProviderRef<List<Tour>>;
 String _$locationProviderHash() => r'31e858aaed4091889928df81b141686a63b2995f';
 
 /// See also [locationProvider].

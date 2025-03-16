@@ -5,21 +5,23 @@ import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:latlong2/latlong.dart';
-import 'screens/about_screen.dart';
+import 'package:graphql_flutter/graphql_flutter.dart'; // Add GraphQL import
+import 'screens/settings_screen.dart';
 import 'screens/tours_screen.dart';
 import 'screens/locations_screen.dart';
 import 'screens/language_screen.dart';
-import 'screens/home_screen.dart';
+import 'screens/home_screen.dart'; // Ensure this import is present
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../l10n/localization_helper.dart';
 import './providers/language_provider.dart';
 import './providers/position_provider.dart';
+import './providers/theme_provider.dart'
+    as app_theme; // Add alias to avoid name conflicts
 import 'dart:io';
 import 'package:uuid/uuid.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:beotura/services/firebase_messaging_service.dart'; // Import FirebaseMessagingService
 import 'firebase_options.dart'; // Import Firebase options
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
@@ -27,6 +29,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize GraphQL cache
+  await initHiveForFlutter();
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform, // Load Firebase options
   );
@@ -85,9 +91,9 @@ class MyApp extends StatefulHookConsumerWidget {
   static final List<Widget> _pages = <Widget>[
     const LanguageScreen(),
     const ToursScreen(),
-    const HomeScreen(),
-    const LocationScreen(),
-    const AboutScreen(),
+    const HomeScreen(), // Make sure HomeScreen is included here
+    const LocationsScreen(),
+    const SettingsScreen(),
   ];
 
   @override
@@ -95,16 +101,11 @@ class MyApp extends StatefulHookConsumerWidget {
 }
 
 class _MyAppState extends ConsumerState<MyApp> {
-  late FirebaseMessagingService _firebaseMessagingService;
-
   @override
   void initState() {
     super.initState();
     getLanguage();
-    _requestPermissions();
-    _initService();
     _initializeUUID();
-    _firebaseMessagingService = FirebaseMessagingService(); // Initialize FCM service
   }
 
   Future<void> getLanguage() async {
@@ -128,43 +129,6 @@ class _MyAppState extends ConsumerState<MyApp> {
     }
   }
 
-  Future<void> _requestPermissions() async {
-    final NotificationPermission notificationPermission =
-        await FlutterForegroundTask.checkNotificationPermission();
-    if (notificationPermission != NotificationPermission.granted) {
-      await FlutterForegroundTask.requestNotificationPermission();
-    }
-
-    if (Platform.isAndroid) {
-      if (!await FlutterForegroundTask.isIgnoringBatteryOptimizations) {
-        await FlutterForegroundTask.requestIgnoreBatteryOptimization();
-      }
-    }
-  }
-
-  void _initService() {
-    FlutterForegroundTask.init(
-      androidNotificationOptions: AndroidNotificationOptions(
-        channelId: 'foreground_service',
-        channelName: 'Foreground Service Notification',
-        channelDescription:
-            'This notification appears when the foreground service is running.',
-        onlyAlertOnce: true,
-      ),
-      iosNotificationOptions: const IOSNotificationOptions(
-        showNotification: false,
-        playSound: false,
-      ),
-      foregroundTaskOptions: ForegroundTaskOptions(
-        eventAction: ForegroundTaskEventAction.repeat(5000),
-        autoRunOnBoot: true,
-        autoRunOnMyPackageReplaced: true,
-        allowWakeLock: true,
-        allowWifiLock: true,
-      ),
-    );
-  }
-
   Future<void> _initializeUUID() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     String? uuid = prefs.getString('device_uuid');
@@ -182,6 +146,8 @@ class _MyAppState extends ConsumerState<MyApp> {
     final singleRoute = ref.watch(singleRouteProvider);
     final l10n = LocalizationHelper(ref);
     final currentPosition = ref.watch(positionProvider);
+    final isDarkMode =
+        ref.watch(app_theme.isDarkModeProvider); // Use aliased import
 
     if (currentPosition != null) {
       singleRoute.originLatitude = currentPosition.latitude;
@@ -201,11 +167,23 @@ class _MyAppState extends ConsumerState<MyApp> {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
-              seedColor: Colors.deepPurple, brightness: Brightness.dark),
+              seedColor: Colors.deepPurple, // Changed to deepPurple
+              brightness: Brightness.light), // Light mode
           useMaterial3: true,
           textTheme: GoogleFonts.openSansTextTheme(
             Theme.of(context).textTheme,
-          ).apply(bodyColor: Colors.white)),
+          ).apply(bodyColor: Colors.black)), // Black text for light mode
+      darkTheme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.deepPurple, // Changed to deepPurple
+              brightness: Brightness.dark),
+          useMaterial3: true,
+          textTheme: GoogleFonts.openSansTextTheme(
+            Theme.of(context).textTheme,
+          ).apply(bodyColor: Colors.white)), // White text for dark mode
+      themeMode: isDarkMode
+          ? ThemeMode.dark
+          : ThemeMode.light, // Now using Flutter's ThemeMode without conflict
       home: Scaffold(
         bottomNavigationBar: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
@@ -227,12 +205,14 @@ class _MyAppState extends ConsumerState<MyApp> {
               label: l10n.translate('locations'),
             ),
             BottomNavigationBarItem(
-              icon: const Icon(Icons.school),
-              label: l10n.translate('about'),
+              icon: const Icon(
+                  Icons.settings), // Changed icon from school to settings
+              label: l10n.translate(
+                  'settings'), // Changed label from "about" to "settings"
             ),
           ],
           currentIndex: navigationState.value,
-          selectedItemColor: Colors.blue,
+          selectedItemColor: Colors.deepPurple, // Changed to purple
           onTap: onItemTapped,
         ),
         body: Center(

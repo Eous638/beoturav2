@@ -17,28 +17,37 @@ class ToursScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(LocalizationHelper(ref).translate('Tours')),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        child: const Icon(Icons.add),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
       body: tours.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text('Error: $error')),
+        error: (error, stackTrace) => Center(
+          child: Text(
+            'Error: $error',
+            style: const TextStyle(color: Colors.red),
+          ),
+        ),
         data: (toursData) => toursData.isEmpty
             ? const Center(
-                child: Text('No Tours Found')) // Handle empty data case
-            : ListView.builder(
-                itemCount: toursData.length, // No need for '?' here
-                itemBuilder: (context, index) {
-                  final tour = toursData[index];
-                  // Already have the data
-                  return ListCard(
-                    item: tour,
-                    locations: tour.locations,
-                    isTour: true, // Set isTour to true
-                  ); // No '!' needed
-                },
+                child: Text(
+                  'No Tours Found',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                ),
+              )
+            : Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: ListView.builder(
+                  itemCount: toursData.length,
+                  itemBuilder: (context, index) {
+                    final tour = toursData[index];
+                    return ListCard(
+                      item: tour,
+                      isTour: true, // Set isTour to true
+                    );
+                  },
+                ),
               ),
       ),
     );
