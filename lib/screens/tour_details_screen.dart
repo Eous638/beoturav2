@@ -5,10 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../classes/tours_class.dart';
 import '../classes/loactions_class.dart';
-import '../classes/tour_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/tour_provider.dart';
-import 'details_screen.dart';
 import '../widgets/document_renderer.dart';
 
 class TourDetailsScreen extends ConsumerStatefulWidget {

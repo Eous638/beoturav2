@@ -1,6 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <meta-data android:name="com.google.android.geo.API_KEY"
-               android:value="AIzaSyApDf-lE6FkiFA0e6o4xdVfsUMR6_2nvIk"/>
+    <uses-permission android:name="android.permission.INTERNET"/> <!-- Added INTERNET permission -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -22,7 +21,10 @@
     <application
         android:label="beotura"
         android:name="${applicationName}"
+        android:usesCleartextTraffic="true"
         android:icon="@mipmap/launcher_icon">
+        <meta-data android:name="com.google.android.geo.API_KEY"
+                   android:value="AIzaSyATytR6x9HoAOszosuJjl_48pCzRLR0_NY"/>
         <service 
             android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
             android:foregroundServiceType="dataSync|remoteMessaging|location|connectedDevice"

@@ -9,7 +9,7 @@ class ButtonComponent extends StatelessWidget {
     super.key,
     required this.text,
     this.action,
-    this.onTap,
+    this.onTap, required Color textColor, required Color backgroundColor,
   });
 
   @override

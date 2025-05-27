@@ -4,7 +4,6 @@ import '../classes/loactions_class.dart';
 import '../screens/details_screen.dart';
 import '../screens/tour_details_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/tour_provider.dart';
 
 class ListCard extends ConsumerWidget {
   final dynamic item;

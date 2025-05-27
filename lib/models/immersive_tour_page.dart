@@ -1,7 +1,219 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import '../widgets/tour_components/map_component.dart';
+
+/// Base class for all tour page types
+abstract class TourPage {
+  final String id;
+  final String type;
+  final UnlockCondition unlock;
+  bool isUnlocked;
+
+  TourPage({
+    required this.id,
+    required this.type,
+    required this.unlock,
+    this.isUnlocked = false,
+  });
+
+  factory TourPage.fromJson(Map<String, dynamic> json) {
+    final String pageType = json['type'] ?? 'content';
+
+    switch (pageType) {
+      case 'nav':
+        return NavigationPage.fromJson(json);
+      case 'title':
+        return TitlePage.fromJson(json);
+      case 'content':
+      default:
+        return ContentPage.fromJson(json);
+    }
+  }
+
+  Map<String, dynamic> toJson();
+}
+
+/// Navigation page with either an image and instructions or a map with instructions
+class NavigationPage extends TourPage {
+  final String? imageUrl;
+  final String instructions;
+  final bool showMap;
+  final List<MapMarker>? mapMarkers;
+  final double? targetLatitude;
+  final double? targetLongitude;
+
+  NavigationPage({
+    required super.id,
+    required super.unlock,
+    super.isUnlocked = false,
+    this.imageUrl,
+    required this.instructions,
+    required this.showMap,
+    this.mapMarkers,
+    this.targetLatitude,
+    this.targetLongitude,
+  }) : super(type: 'nav');
+
+  factory NavigationPage.fromJson(Map<String, dynamic> json) {
+    List<MapMarker>? markers;
+
+    if (json['mapMarkers'] != null) {
+      markers = (json['mapMarkers'] as List)
+          .map((marker) => MapMarker(
+                lat: marker['lat'] ?? 0.0,
+                lng: marker['lng'] ?? 0.0,
+                label: marker['label'] ?? '',
+                description: marker['description'],
+              ))
+          .toList();
+    }
+
+    return NavigationPage(
+      id: json['id'] ?? '',
+      unlock: UnlockCondition.fromJson(json['unlock'] ?? 'immediate'),
+      imageUrl: json['imageUrl'],
+      instructions: json['instructions'] ?? '',
+      showMap: json['showMap'] ?? false,
+      mapMarkers: markers,
+      targetLatitude: json['targetLatitude'] != null
+          ? double.tryParse(json['targetLatitude'].toString())
+          : null,
+      targetLongitude: json['targetLongitude'] != null
+          ? double.tryParse(json['targetLongitude'].toString())
+          : null,
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'type': type,
+      'unlock': unlock.toJson(),
+      'isUnlocked': isUnlocked,
+      if (imageUrl != null) 'imageUrl': imageUrl,
+      'instructions': instructions,
+      'showMap': showMap,
+      if (mapMarkers != null)
+        'mapMarkers': mapMarkers!
+            .map((m) => {
+                  'lat': m.lat,
+                  'lng': m.lng,
+                  'label': m.label,
+                  if (m.description != null) 'description': m.description,
+                })
+            .toList(),
+      if (targetLatitude != null) 'targetLatitude': targetLatitude,
+      if (targetLongitude != null) 'targetLongitude': targetLongitude,
+    };
+  }
+}
+
+/// Title page that serves as an introduction/cover for the tour
+class TitlePage extends TourPage {
+  final String title;
+  final String subtitle;
+  final String? imageUrl;
+  final String? authorName;
+  final String? description;
+  final bool showStartButton;
+  final String? suggestedTime;
+  final Map<String, dynamic>? startLocation;
+
+  TitlePage({
+    required super.id,
+    required super.unlock,
+    super.isUnlocked = false,
+    required this.title,
+    required this.subtitle,
+    this.imageUrl,
+    this.authorName,
+    this.description,
+    this.showStartButton = true,
+    this.suggestedTime,
+    this.startLocation,
+  }) : super(type: 'title');
+
+  factory TitlePage.fromJson(Map<String, dynamic> json) {
+    return TitlePage(
+      id: json['id'] ?? '',
+      unlock: UnlockCondition.fromJson(json['unlock'] ?? 'immediate'),
+      title: json['title'] ?? '',
+      subtitle: json['subtitle'] ?? '',
+      imageUrl: json['imageUrl'],
+      authorName: json['authorName'],
+      description: json['description'],
+      showStartButton: json['showStartButton'] ?? true,
+      suggestedTime: json['suggestedTime'],
+      startLocation: json['startLocation'],
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'type': type,
+      'unlock': unlock.toJson(),
+      'isUnlocked': isUnlocked,
+      'title': title,
+      'subtitle': subtitle,
+      if (imageUrl != null) 'imageUrl': imageUrl,
+      if (authorName != null) 'authorName': authorName,
+      if (description != null) 'description': description,
+      'showStartButton': showStartButton,
+      if (suggestedTime != null) 'suggestedTime': suggestedTime,
+      if (startLocation != null) 'startLocation': startLocation,
+    };
+  }
+}
+
+/// Content page with rich scrollable content
+class ContentPage extends TourPage {
+  final List<ContentComponent> content;
+  final PageBackground? background;
+
+  ContentPage({
+    required super.id,
+    required super.unlock,
+    super.isUnlocked = false,
+    required this.content,
+    this.background,
+  }) : super(type: 'content');
+
+  factory ContentPage.fromJson(Map<String, dynamic> json) {
+    final List<ContentComponent> contentItems = [];
+
+    if (json['content'] != null) {
+      for (var component in json['content']) {
+        contentItems.add(ContentComponent.fromJson(component));
+      }
+    }
+
+    return ContentPage(
+      id: json['id'] ?? '',
+      unlock: UnlockCondition.fromJson(json['unlock'] ?? 'immediate'),
+      content: contentItems,
+      background: json['background'] != null
+          ? PageBackground.fromJson(json['background'] as Map<String, dynamic>)
+          : null,
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'type': type,
+      'unlock': unlock.toJson(),
+      'isUnlocked': isUnlocked,
+      'content': content.map((c) => c.toJson()).toList(),
+      if (background != null) 'background': background!.toJson(),
+    };
+  }
+}
 
 /// Model for the immersive tour page content component
-class TourPageComponent {
+class ContentComponent {
   final String component;
   final String? text;
   final String? src;
@@ -11,7 +223,7 @@ class TourPageComponent {
   final bool? loop;
   final List<Map<String, dynamic>>? markers;
 
-  TourPageComponent({
+  ContentComponent({
     required this.component,
     this.text,
     this.src,
@@ -22,8 +234,8 @@ class TourPageComponent {
     this.markers,
   });
 
-  factory TourPageComponent.fromJson(Map<String, dynamic> json) {
-    return TourPageComponent(
+  factory ContentComponent.fromJson(Map<String, dynamic> json) {
+    return ContentComponent(
       component: json['component'] as String,
       text: json['text'] as String?,
       src: json['src'] as String?,
@@ -126,54 +338,6 @@ class PageBackground {
   }
 }
 
-/// Model for an immersive tour page based on the new_tour.md spec
-class ImmersiveTourPage {
-  final String id;
-  final String type;
-  final UnlockCondition unlock;
-  final PageBackground? background;
-  final List<TourPageComponent> content;
-  bool isUnlocked;
-
-  ImmersiveTourPage({
-    required this.id,
-    required this.type,
-    required this.unlock,
-    this.background,
-    required this.content,
-    this.isUnlocked = false,
-  });
-
-  factory ImmersiveTourPage.fromJson(Map<String, dynamic> json) {
-    final unlock = json['unlock'];
-
-    return ImmersiveTourPage(
-      id: json['id'] as String,
-      type: json['type'] as String,
-      unlock: unlock is String
-          ? UnlockCondition(mode: unlock)
-          : UnlockCondition.fromJson(unlock as Map<String, dynamic>),
-      background: json['background'] != null
-          ? PageBackground.fromJson(json['background'] as Map<String, dynamic>)
-          : null,
-      content: (json['content'] as List)
-          .map((item) =>
-              TourPageComponent.fromJson(item as Map<String, dynamic>))
-          .toList(),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'type': type,
-      'unlock': unlock.toJson(),
-      if (background != null) 'background': background!.toJson(),
-      'content': content.map((c) => c.toJson()).toList(),
-    };
-  }
-}
-
 /// Model for the tour theme styling
 class TourTheme {
   final String primaryColor;
@@ -216,7 +380,7 @@ class ImmersiveTour {
   final String id;
   final String title;
   final TourTheme theme;
-  final List<ImmersiveTourPage> pages;
+  final List<TourPage> pages;
 
   ImmersiveTour({
     required this.id,
@@ -228,15 +392,23 @@ class ImmersiveTour {
   factory ImmersiveTour.fromJson(Map<String, dynamic> json) {
     final tourData = json['tour'] ?? json;
 
+    // Create theme
+    final theme =
+        TourTheme.fromJson(tourData['theme'] as Map<String, dynamic>?);
+
+    // Parse pages
+    final List<TourPage> tourPages = [];
+    if (tourData['pages'] != null) {
+      for (var pageJson in tourData['pages']) {
+        tourPages.add(TourPage.fromJson(pageJson));
+      }
+    }
+
     return ImmersiveTour(
-      id: tourData['id'] as String,
-      title: tourData['title'] as String,
-      theme: TourTheme.fromJson(tourData['theme'] as Map<String, dynamic>),
-      pages: (tourData['pages'] as List)
-              .map((page) =>
-                  ImmersiveTourPage.fromJson(page as Map<String, dynamic>))
-              .toList() ??
-          [],
+      id: tourData['id'] as String? ?? '',
+      title: tourData['title'] as String? ?? '',
+      theme: theme,
+      pages: tourPages,
     );
   }
 
@@ -247,5 +419,13 @@ class ImmersiveTour {
       'theme': theme.toJson(),
       'pages': pages.map((p) => p.toJson()).toList(),
     };
+  }
+
+  // Helper to convert hex color string to Color
+  static Color hexToColor(String hexString) {
+    final buffer = StringBuffer();
+    if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
+    buffer.write(hexString.replaceFirst('#', ''));
+    return Color(int.parse(buffer.toString(), radix: 16));
   }
 }

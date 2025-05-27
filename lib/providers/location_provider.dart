@@ -67,3 +67,11 @@ class LocationProvider extends AsyncNotifier<List<Location>> {
     }
   }
 }
+
+// Provider to fetch a single location by its ID
+final locationByIdProvider =
+    FutureProvider.family<Location?, String>((ref, id) async {
+  // Access the LocationProvider notifier to use its methods
+  final locationNotifier = ref.watch(locationProviderProvider.notifier);
+  return locationNotifier.getLocationById(id);
+});

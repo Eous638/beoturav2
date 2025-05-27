@@ -32,7 +32,8 @@ class Tour extends CardItem {
     required this.frontPageContent_en,
     required this.frontPageContent_sr,
     this.createdAt, // Add to constructor
-    required this.pages, // Add to constructor
+    required this.pages,
+    required String category_en, // Add to constructor
   }) {
     pages.sort((a, b) => a.order.compareTo(b.order)); // Sort pages by order
   }
@@ -59,6 +60,7 @@ class Tour extends CardItem {
       createdAt:
           json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
       pages: _extractPages(json),
+      category_en: '',
     );
   }
 
@@ -134,6 +136,7 @@ class Tour extends CardItem {
               ?.map<TourPage>((pageData) => TourPage.fromGraphQL(pageData))
               .toList() ??
           [],
+      category_en: '',
     );
   }
 }

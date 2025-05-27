@@ -18,7 +18,7 @@ abstract class TourPage {
 
   factory TourPage.fromJson(Map<String, dynamic> json) {
     final String pageType = json['type'] ?? 'content';
-    
+
     switch (pageType) {
       case 'nav':
         return NavigationPage.fromJson(json);
@@ -54,7 +54,7 @@ class NavigationPage extends TourPage {
 
   factory NavigationPage.fromJson(Map<String, dynamic> json) {
     List<MapMarker>? markers;
-    
+
     if (json['mapMarkers'] != null) {
       markers = (json['mapMarkers'] as List)
           .map((marker) => MapMarker.fromJson(marker))
@@ -68,11 +68,11 @@ class NavigationPage extends TourPage {
       instructions: json['instructions'] ?? '',
       showMap: json['showMap'] ?? false,
       mapMarkers: markers,
-      targetLatitude: json['targetLatitude'] != null 
-          ? double.tryParse(json['targetLatitude'].toString()) 
+      targetLatitude: json['targetLatitude'] != null
+          ? double.tryParse(json['targetLatitude'].toString())
           : null,
-      targetLongitude: json['targetLongitude'] != null 
-          ? double.tryParse(json['targetLongitude'].toString()) 
+      targetLongitude: json['targetLongitude'] != null
+          ? double.tryParse(json['targetLongitude'].toString())
           : null,
     );
   }
@@ -130,7 +130,7 @@ class ContentPage extends TourPage {
 
   factory ContentPage.fromJson(Map<String, dynamic> json) {
     final List<ContentComponent> contentItems = [];
-    
+
     if (json['content'] != null) {
       for (var component in json['content']) {
         contentItems.add(ContentComponent.fromJson(component));
@@ -173,7 +173,7 @@ class ContentComponent {
 
   factory ContentComponent.fromJson(Map<String, dynamic> json) {
     List<MapMarker>? markers;
-    
+
     if (json['markers'] != null) {
       markers = (json['markers'] as List)
           .map((marker) => MapMarker.fromJson(marker))
@@ -237,10 +237,10 @@ class UnlockCondition {
   });
 
   factory UnlockCondition.fromJson(Map<String, dynamic> json) {
-    if (json == null || json['mode'] == 'immediate') {
+    if (json['mode'] == 'immediate') {
       return UnlockCondition(isImmediate: true);
     }
-    
+
     if (json['mode'] == 'walk') {
       return UnlockCondition(
         isWalk: true,
@@ -250,7 +250,7 @@ class UnlockCondition {
         message: json['message'] ?? 'Walk to destination to continue',
       );
     }
-    
+
     return UnlockCondition(isImmediate: true);
   }
 }
@@ -273,11 +273,11 @@ class ImmersiveTour {
     final themeJson = json['theme'] ?? {};
     final primaryColorHex = themeJson['primaryColor'] ?? '#111111';
     final accentColorHex = themeJson['accentColor'] ?? '#E63946';
-    
+
     // Parse theme colors from hex
     final primaryColor = _hexToColor(primaryColorHex);
     final accentColor = _hexToColor(accentColorHex);
-    
+
     // Create custom theme
     final theme = ThemeData(
       primaryColor: primaryColor,
@@ -287,7 +287,7 @@ class ImmersiveTour {
       ),
       fontFamily: themeJson['font'] ?? 'serif',
     );
-    
+
     // Parse pages
     final List<TourPage> tourPages = [];
     if (json['pages'] != null) {
@@ -295,7 +295,7 @@ class ImmersiveTour {
         tourPages.add(TourPage.fromJson(pageJson));
       }
     }
-    
+
     return ImmersiveTour(
       id: json['id'] ?? '',
       title: json['title'] ?? '',
@@ -303,7 +303,7 @@ class ImmersiveTour {
       pages: tourPages,
     );
   }
-  
+
   // Helper to convert hex color string to Color
   static Color _hexToColor(String hexString) {
     final buffer = StringBuffer();

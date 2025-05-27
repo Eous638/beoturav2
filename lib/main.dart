@@ -9,7 +9,7 @@ import 'package:graphql_flutter/graphql_flutter.dart'; // Add GraphQL import
 import 'screens/settings_screen.dart';
 import 'screens/tours_screen.dart';
 import 'screens/locations_screen.dart';
-import 'screens/language_screen.dart';
+import 'screens/venues_screen.dart'; // Added VenuesScreen import
 import 'screens/blog_screen.dart'; // Updated import
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -91,7 +91,7 @@ class MyApp extends StatefulHookConsumerWidget {
   const MyApp({super.key});
 
   static final List<Widget> _pages = <Widget>[
-    const LanguageScreen(),
+    const VenuesScreen(), // Changed LanguageScreen to VenuesScreen
     const ToursScreen(),
     const BlogScreen(), // Updated to BlogScreen
     const LocationsScreen(),
@@ -309,8 +309,9 @@ class _MyAppState extends ConsumerState<MyApp> {
             type: BottomNavigationBarType.fixed,
             items: <BottomNavigationBarItem>[
               BottomNavigationBarItem(
-                icon: const Icon(Icons.language_outlined),
-                label: l10n.translate('language'),
+                icon:
+                    const Icon(Icons.museum_outlined), // Changed icon to museum
+                label: l10n.translate('venues'), // Changed label
               ),
               BottomNavigationBarItem(
                 icon: const Icon(Icons.map_outlined),

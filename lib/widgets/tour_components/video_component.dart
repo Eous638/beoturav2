@@ -39,10 +39,32 @@ class _VideoComponentState extends State<VideoComponent> {
   Future<void> _initVideoPlayer() async {
     // Check if video URL is a network URL or an asset
     if (widget.videoUrl.startsWith('http')) {
-      _controller = VideoPlayerController.network(widget.videoUrl);
+      _controller = VideoPlayerController.networkUrl(
+          Uri.parse(widget.videoUrl)); // Use networkUrl with Uri.parse
     } else {
       _controller = VideoPlayerController.asset(widget.videoUrl);
     }
+
+    // Add error listener
+    _controller.addListener(() {
+      if (_controller.value.hasError) {
+        debugPrint(
+            'VideoPlayerController Error: ${_controller.value.errorDescription}');
+        if (mounted) {
+          setState(() {
+            // Potentially update UI to show an error message
+          });
+        }
+      }
+      final isBuffering = _controller.value.isBuffering;
+      if (_isBuffering != isBuffering) {
+        if (mounted) {
+          setState(() {
+            _isBuffering = isBuffering;
+          });
+        }
+      }
+    });
 
     // Set looping based on props
     _controller.setLooping(widget.loop);
@@ -61,16 +83,6 @@ class _VideoComponentState extends State<VideoComponent> {
         _isInitialized = true;
       });
     }
-
-    // Listen for buffering state
-    _controller.addListener(() {
-      final isBuffering = _controller.value.isBuffering;
-      if (_isBuffering != isBuffering) {
-        setState(() {
-          _isBuffering = isBuffering;
-        });
-      }
-    });
   }
 
   @override

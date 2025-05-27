@@ -50,7 +50,10 @@ class Location extends CardItem {
 
   factory Location.fromJson(Map<String, dynamic> json) {
     return Location(
-      id: json['id'] ?? json['_id'] ?? '',
+      id: json['id_field']?.toString() ??
+          json['id'] ??
+          json['_id'] ??
+          '', // Prioritize id_field
       title: json['title'] ?? json['name'] ?? '',
       title_en: json['title_en'] ?? json['name_en'],
       description: json['description'] ?? '',
@@ -61,8 +64,9 @@ class Location extends CardItem {
       icon: json['icon'],
       category: json['category'] ??
           json['tour_title'], // Can use tour_title as category name
-      categoryId:
-          json['categoryId'] ?? json['tour_id'], // Store the category/tour ID
+      categoryId: json['tour']?.toString() ??
+          json['categoryId'] ??
+          json['tour_id'], // Prioritize tour
       order: json['order'] != null
           ? int.tryParse(json['order'].toString()) ?? 0
           : 0,

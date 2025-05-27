@@ -29,7 +29,7 @@ class MapComponent extends StatefulWidget {
     required this.markers,
     this.initialLat,
     this.initialLng,
-    this.initialZoom = 15.0,
+    this.initialZoom = 15.0, required bool showRouteFromUser,
   });
 
   @override

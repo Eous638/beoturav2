@@ -1,6 +1,10 @@
+import 'package:beotura/widgets/inline_location_card.dart';
+import 'package:beotura/widgets/inline_tour_card.dart'; // Import InlineTourCard
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../services/image_resolver_service.dart';
+import './tour_components/video_component.dart'; // Import VideoComponent
+import './audio_player_widget.dart'; // Import AudioPlayerWidget
 
 /// A widget that renders rich content from a document structure
 /// similar to the one used in KeystoneJS/GraphCMS content.
@@ -23,7 +27,7 @@ class DocumentRenderer extends ConsumerWidget {
         child: Text('No content available.'),
       );
     }
-    
+
     // Generate widgets based on document structure
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -36,11 +40,11 @@ class DocumentRenderer extends ConsumerWidget {
   Widget _renderBlock(BuildContext context, WidgetRef ref, dynamic block) {
     final type = block['type'] as String?;
     final children = block['children'] as List?;
-    
+
     if (type == null) {
       return const SizedBox.shrink();
     }
-    
+
     // Handle different block types
     switch (type) {
       case 'heading':
@@ -76,7 +80,7 @@ class DocumentRenderer extends ConsumerWidget {
   Widget _renderHeading(BuildContext context, dynamic block, List children) {
     final level = block['level'] as int? ?? 1;
     final text = _getTextFromChildren(children);
-    
+
     // Select text style based on heading level
     TextStyle? style;
     switch (level) {
@@ -97,7 +101,7 @@ class DocumentRenderer extends ConsumerWidget {
       default:
         style = Theme.of(context).textTheme.titleMedium;
     }
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0, top: 8.0),
       child: Text(text, style: style),
@@ -106,7 +110,7 @@ class DocumentRenderer extends ConsumerWidget {
 
   Widget _renderParagraph(BuildContext context, List children) {
     final spans = _buildTextSpans(context, children);
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
       child: RichText(
@@ -128,18 +132,17 @@ class DocumentRenderer extends ConsumerWidget {
           if (itemChildren == null || itemChildren.isEmpty) {
             return const SizedBox.shrink();
           }
-          
+
           // Get content from list item
           final content = itemChildren.firstWhere(
-            (child) => child['type'] == 'list-item-content',
-            orElse: () => {'children': []}
-          );
-          
+              (child) => child['type'] == 'list-item-content',
+              orElse: () => {'children': []});
+
           final contentChildren = content['children'] as List?;
           if (contentChildren == null || contentChildren.isEmpty) {
             return const SizedBox.shrink();
           }
-          
+
           return Padding(
             padding: const EdgeInsets.only(bottom: 4.0),
             child: Row(
@@ -149,7 +152,8 @@ class DocumentRenderer extends ConsumerWidget {
                 Expanded(
                   child: RichText(
                     text: TextSpan(
-                      style: defaultTextStyle ?? Theme.of(context).textTheme.bodyLarge,
+                      style: defaultTextStyle ??
+                          Theme.of(context).textTheme.bodyLarge,
                       children: _buildTextSpans(context, contentChildren),
                     ),
                   ),
@@ -170,33 +174,35 @@ class DocumentRenderer extends ConsumerWidget {
         children: children.asMap().entries.map((entry) {
           final index = entry.key;
           final item = entry.value;
-          
+
           final itemChildren = item['children'] as List?;
           if (itemChildren == null || itemChildren.isEmpty) {
             return const SizedBox.shrink();
           }
-          
+
           // Get content from list item
           final content = itemChildren.firstWhere(
-            (child) => child['type'] == 'list-item-content',
-            orElse: () => {'children': []}
-          );
-          
+              (child) => child['type'] == 'list-item-content',
+              orElse: () => {'children': []});
+
           final contentChildren = content['children'] as List?;
           if (contentChildren == null || contentChildren.isEmpty) {
             return const SizedBox.shrink();
           }
-          
+
           return Padding(
             padding: const EdgeInsets.only(bottom: 4.0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('${index + 1}. ', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text('${index + 1}. ',
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold)),
                 Expanded(
                   child: RichText(
                     text: TextSpan(
-                      style: defaultTextStyle ?? Theme.of(context).textTheme.bodyLarge,
+                      style: defaultTextStyle ??
+                          Theme.of(context).textTheme.bodyLarge,
                       children: _buildTextSpans(context, contentChildren),
                     ),
                   ),
@@ -243,7 +249,7 @@ class DocumentRenderer extends ConsumerWidget {
 
   Widget _renderCodeBlock(BuildContext context, List children) {
     final text = _getTextFromChildren(children);
-    
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 12.0),
       padding: const EdgeInsets.all(16.0),
@@ -264,11 +270,11 @@ class DocumentRenderer extends ConsumerWidget {
   Widget _renderLayout(BuildContext context, WidgetRef ref, dynamic block) {
     final layout = block['layout'] as List?;
     final layoutChildren = block['children'] as List?;
-    
+
     if (layout == null || layoutChildren == null || layoutChildren.isEmpty) {
       return const SizedBox.shrink();
     }
-    
+
     // Create a row with flexible widgets based on the layout proportions
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -278,7 +284,7 @@ class DocumentRenderer extends ConsumerWidget {
           final index = entry.key;
           final layoutArea = entry.value;
           final proportion = layout.length > index ? layout[index] as int : 1;
-          
+
           return Flexible(
             flex: proportion,
             child: Padding(
@@ -296,47 +302,93 @@ class DocumentRenderer extends ConsumerWidget {
     );
   }
 
-  Widget _renderComponentBlock(BuildContext context, WidgetRef ref, dynamic block) {
+  Widget _renderComponentBlock(
+      BuildContext context, WidgetRef ref, dynamic block) {
     final component = block['component'] as String?;
-    
     if (component == null) {
       return const SizedBox.shrink();
     }
-    
     // Handle specific component types
     switch (component) {
       case 'embedImage':
         return _renderEmbeddedImage(context, ref, block);
+      case 'audio':
+        final props = block['props'] as Map<String, dynamic>?;
+        final audioUrl = props?['audioUrl'] as String?;
+        if (audioUrl == null || audioUrl.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12.0),
+          child: AudioPlayerWidget(audioUrl: audioUrl), // Use AudioPlayerWidget
+        );
+      case 'video':
+        // final props = block['props'] as Map<String, dynamic>?;
+        // final videoUrl = props?['videoUrl'] as String?;
+        // final autoplay = props?['autoplay'] as bool? ?? false;
+        // final loop = props?['loop'] as bool? ?? false;
+
+        // if (videoUrl == null || videoUrl.isEmpty) {
+        //   return const SizedBox.shrink();
+        // }
+        // return Padding(
+        //   padding: const EdgeInsets.symmetric(vertical: 12.0),
+        //   // Use VideoComponent from tour_components
+        //   child: VideoComponent(
+        //     videoUrl: videoUrl,
+        //     autoplay: autoplay,
+        //     loop: loop,
+        //   ),
+        // );
+        return const SizedBox(
+            child: Text("Video component temporarily removed")); // Placeholder
+      case 'location_card':
+        final props = block['props'] as Map<String, dynamic>?;
+        final locationId = props?['locationId'] as String?;
+        if (locationId == null) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12.0),
+          child: InlineLocationCard(locationId: locationId),
+        );
+      case 'tour_card': // Add new case for tour_card
+        final props = block['props'] as Map<String, dynamic>?;
+        final tourId = props?['tourId'] as String?;
+        if (tourId == null) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12.0),
+          child: InlineTourCard(tourId: tourId),
+        );
       default:
         return const SizedBox.shrink();
     }
   }
 
-  Widget _renderEmbeddedImage(BuildContext context, WidgetRef ref, dynamic block) {
+  Widget _renderEmbeddedImage(
+      BuildContext context, WidgetRef ref, dynamic block) {
     final props = block['props'] as Map<String, dynamic>?;
-    
+
     if (props == null || props['image'] == null) {
       return const SizedBox.shrink();
     }
-    
+
     // Extract image ID from props
     final imageId = props['image']['id'] as String?;
     final altText = props['altText'] as String? ?? '';
     final caption = props['caption'] as String? ?? '';
-    
+
     if (imageId == null) {
       return const SizedBox.shrink();
     }
-    
+
     // Check if the image URL is already in the cache
     final cachedUrls = ref.watch(imageUrlCacheProvider);
     final cachedUrl = cachedUrls[imageId];
-    
+
     if (cachedUrl != null) {
       // If we already have the URL, render the image directly
       return _buildImageWidget(context, cachedUrl, altText, caption);
     }
-    
+
     // Let's fix the type error by not passing the ref parameter:
     // Instead, let's use the resolveImageUrl without the ref parameter
     // and handle caching separately
@@ -344,7 +396,7 @@ class DocumentRenderer extends ConsumerWidget {
       future: () async {
         final imageResolver = ref.read(imageResolverProvider);
         final url = await imageResolver.resolveImageUrl(imageId);
-        
+
         // If we get a URL, cache it manually
         if (url != null) {
           ref.read(imageUrlCacheProvider.notifier).update((state) {
@@ -353,7 +405,7 @@ class DocumentRenderer extends ConsumerWidget {
             return newState;
           });
         }
-        
+
         return url;
       }(),
       builder: (context, snapshot) {
@@ -402,8 +454,9 @@ class DocumentRenderer extends ConsumerWidget {
       },
     );
   }
-  
-  Widget _buildImageWidget(BuildContext context, String imageUrl, String altText, String caption) {
+
+  Widget _buildImageWidget(
+      BuildContext context, String imageUrl, String altText, String caption) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 16.0),
       child: Column(
@@ -424,7 +477,8 @@ class DocumentRenderer extends ConsumerWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.broken_image, size: 64, color: Colors.grey),
+                      const Icon(Icons.broken_image,
+                          size: 64, color: Colors.grey),
                       if (altText.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(top: 8.0),
@@ -445,8 +499,8 @@ class DocumentRenderer extends ConsumerWidget {
               child: Text(
                 caption,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontStyle: FontStyle.italic,
-                ),
+                      fontStyle: FontStyle.italic,
+                    ),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -457,7 +511,7 @@ class DocumentRenderer extends ConsumerWidget {
 
   String _getTextFromChildren(List children) {
     if (children.isEmpty) return '';
-    
+
     return children.map((child) => child['text'] ?? '').join(' ');
   }
 
@@ -472,21 +526,24 @@ class DocumentRenderer extends ConsumerWidget {
       final isKeyboard = child['keyboard'] as bool? ?? false;
       final isSubscript = child['subscript'] as bool? ?? false;
       final isSuperscript = child['superscript'] as bool? ?? false;
-      
+
       return TextSpan(
         text: text,
         style: TextStyle(
           fontWeight: isBold ? FontWeight.bold : null,
           fontStyle: isItalic ? FontStyle.italic : null,
-          decoration: hasUnderline 
-              ? TextDecoration.underline 
-              : isStrikethrough 
-                  ? TextDecoration.lineThrough 
+          decoration: hasUnderline
+              ? TextDecoration.underline
+              : isStrikethrough
+                  ? TextDecoration.lineThrough
                   : null,
           fontFamily: isCode || isKeyboard ? 'monospace' : null,
           backgroundColor: isKeyboard ? Colors.grey[200] : null,
-          fontSize: isSubscript || isSuperscript 
-              ? (defaultTextStyle?.fontSize ?? Theme.of(context).textTheme.bodyMedium?.fontSize ?? 14) * 0.75
+          fontSize: isSubscript || isSuperscript
+              ? (defaultTextStyle?.fontSize ??
+                      Theme.of(context).textTheme.bodyMedium?.fontSize ??
+                      14) *
+                  0.75
               : null,
           height: isSubscript ? 2.5 : (isSuperscript ? 0.75 : null),
         ),

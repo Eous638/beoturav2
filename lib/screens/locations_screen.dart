@@ -1,14 +1,12 @@
 import 'package:beotura/screens/locations_map_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/location_provider.dart';
 import '../providers/tour_provider.dart';
 import '../providers/language_provider.dart';
 import '../classes/loactions_class.dart';
 import '../classes/tours_class.dart';
 import '../enums/language_enum.dart';
 import '../l10n/localization_helper.dart';
-import '../widget/list_widget.dart';
 import '../screens/details_screen.dart'; // Import details screen for navigation
 
 class LocationsScreen extends ConsumerStatefulWidget {
