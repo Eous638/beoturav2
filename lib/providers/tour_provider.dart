@@ -1,91 +1,84 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../classes/tours_class.dart';
 import '../classes/loactions_class.dart';
-import '../services/graphql_client.dart';
-import '../graphql/queries/tour_queries.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-part 'tour_provider.g.dart';
 
-final tourProviderProvider =
-    AsyncNotifierProvider<TourProvider, List<Tour>>(() => TourProvider());
-
-class TourProvider extends AsyncNotifier<List<Tour>> {
-  @override
-  Future<List<Tour>> build() async {
-    return _fetchTours();
-  }
-
-  Future<List<Tour>> _fetchTours() async {
-    try {
-      final graphQLClient = ref.read(graphQLClientProvider);
-      final graphQLService = GraphQLService(graphQLClient);
-
-      final result = await graphQLService.performQuery(TourQueries.getAllTours);
-
-      if (result.hasException) {
-        throw Exception(
-            'Failed to fetch tours: ${result.exception.toString()}');
-      }
-
-      final data = result.data?['tours'] as List<dynamic>?;
-
-      if (data == null) {
-        return [];
-      }
-
-      // Parse and sort tours by the 'order' field
-      return data.map((tourData) => Tour.fromGraphQL(tourData)).toList()
-        ..sort((a, b) => a.order.compareTo(b.order));
-    } catch (e) {
-      throw Exception('Error fetching tours: $e');
-    }
-  }
-
-  Future<Tour?> getTourById(String id) async {
-    try {
-      final graphQLClient = ref.read(graphQLClientProvider);
-      final graphQLService = GraphQLService(graphQLClient);
-
-      final result = await graphQLService.performQuery(
-        TourQueries.getTourById,
-        variables: {'id': id},
-      );
-
-      if (result.hasException) {
-        throw Exception('Failed to fetch tour: ${result.exception.toString()}');
-      }
-
-      final tourData = result.data?['tour'];
-      if (tourData == null) return null;
-
-      return Tour.fromGraphQL(tourData);
-    } catch (e) {
-      throw Exception('Error fetching tour: $e');
-    }
-  }
-}
-
-@riverpod
-Future<List<Location>> locationProvider(LocationProviderRef ref) async {
+// Use a simple Future provider to get all tours from the new API
+final tourProviderProvider = FutureProvider<List<Tour>>((ref) async {
   try {
+    // Use the new API endpoint
     final response =
-        await http.get(Uri.parse('https://api2.gladni.rs/api/beotura/places'));
-    ref.keepAlive();
-    if (response.statusCode == 200) {
-      final data = json.decode(utf8.decode(response.bodyBytes));
-      final fetchedTours =
-          data.map<Location>((json) => Location.fromGraphQL(json)).toList();
+        await http.get(Uri.parse('https://api.beotura.rs/api/tours'));
 
-      return fetchedTours;
-    } else {
+    if (response.statusCode != 200) {
       throw Exception('Failed to fetch tours: ${response.statusCode}');
     }
+
+    // Parse the response body and ensure it's UTF-8 encoded
+    final jsonData = json.decode(utf8.decode(response.bodyBytes));
+
+    // Convert JSON to Tour objects
+    final tours = (jsonData as List<dynamic>)
+        .map((tourData) => Tour.fromJson(tourData))
+        .toList();
+
+    // Sort the tours by their order field
+    tours.sort((a, b) => a.order.compareTo(b.order));
+
+    return tours;
   } catch (e) {
-    debugPrint('Error fetching locations: $e');
-    rethrow;
+    debugPrint('Error in tourProviderProvider: $e');
+    throw Exception('Failed to load tours: $e');
   }
-}
+});
+
+// A provider for getting a tour by ID
+final tourByIdProvider = FutureProvider.family<Tour?, String>((ref, id) async {
+  final tours = await ref.watch(tourProviderProvider.future);
+  try {
+    return tours.firstWhere((tour) => tour.id == id);
+  } catch (e) {
+    // Return null if no tour matching the ID is found
+    return null;
+  }
+});
+
+// A provider for getting all locations from all tours
+final allLocationsProvider = FutureProvider<List<Location>>((ref) async {
+  final tours = await ref.watch(tourProviderProvider.future);
+  final allLocations = <Location>[];
+
+  // Extract locations from all tours
+  for (final tour in tours) {
+    allLocations.addAll(tour.locations);
+  }
+
+  // Sort locations by order
+  allLocations.sort((a, b) => a.order.compareTo(b.order));
+
+  return allLocations;
+});
+
+// Provider to get locations filtered by tour (category)
+final locationsByTourProvider =
+    FutureProvider.family<List<Location>, String>((ref, tourId) async {
+  final tours = await ref.watch(tourProviderProvider.future);
+
+  try {
+    final tour = tours.firstWhere((t) => t.id == tourId);
+    final locations = tour.locations;
+    locations.sort((a, b) => a.order.compareTo(b.order));
+    return locations;
+  } catch (e) {
+    // Return empty list if no tour matching the ID is found
+    return [];
+  }
+});
+
+// Provider for categories (repurposed tours)
+final categoriesProvider = FutureProvider<List<Tour>>((ref) async {
+  return ref.watch(tourProviderProvider.future);
+});

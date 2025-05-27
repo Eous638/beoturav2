@@ -1,88 +1,108 @@
-import 'package:beotura/enums/language_enum.dart';
 import 'package:flutter/material.dart';
-import '../classes/card_item.dart';
+import '../classes/tours_class.dart';
 import '../classes/loactions_class.dart';
 import '../screens/details_screen.dart';
+import '../screens/tour_details_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/single_route_provider.dart';
-import '../providers/language_provider.dart';
+import '../providers/tour_provider.dart';
 
 class ListCard extends ConsumerWidget {
+  final dynamic item;
+  final bool isTour;
+
   const ListCard({
     super.key,
     required this.item,
-    this.locations,
-    this.latitude,
-    this.longitude,
-    this.isTour = false, // Add this parameter
+    required this.isTour,
   });
-  final double? latitude;
-  final double? longitude;
-  final CardItem item;
-  final List<Location>? locations;
-  final bool isTour; // Add this field
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final singleRoute = ref.watch(singleRouteProvider);
-    final currentLanguage = ref.read(languageProvider);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-      child: GestureDetector(
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(15),
         onTap: () {
-          if (latitude != null && longitude != null) {
-            singleRoute.destinationLatitude = latitude!;
-            singleRoute.destinationLongitude = longitude!;
+          if (isTour) {
+            // Navigate to TourDetailsScreen with the tour
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => TourDetailsScreen(tour: item),
+              ),
+            );
+          } else {
+            // Navigate to DetailsScreen with the location
+            final location = item as Location;
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DetailsScreen(
+                  title: location.title_en ?? location.title_sr ?? '',
+                  imageUrl: location.imageUrl ?? '',
+                  text: location.description_en ?? location.description ?? '',
+                  tourId: location.id ?? '',
+                  isTour: false,
+                ),
+              ),
+            );
           }
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => DetailsScreen(
-                title: currentLanguage == Language.english
-                    ? (item.title_en ?? 'Default Title')
-                    : (item.title ?? 'Default Title'),
-                imageUrl: item.imageUrl ?? 'https://via.placeholder.com/150',
-                text: currentLanguage == Language.english
-                    ? (item.description_en ?? 'Default Description')
-                    : (item.description ?? 'Default Description'),
-                locations: locations,
-                tourId: item.id,
-                isTour: isTour, // Pass the isTour parameter
-              ),
-            ),
-          );
         },
-        child: Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(25),
-          ),
-          color: Colors.black,
-          elevation: 5,
-          child: Container(
-            height: 250,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(25),
-              image: DecorationImage(
-                image: NetworkImage(
-                    item.imageUrl ?? 'https://via.placeholder.com/150'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image
+            ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(15)),
+              child: Image.network(
+                isTour
+                    ? (item as Tour).imageUrl ?? ''
+                    : (item as Location).imageUrl ?? '',
+                height: 180,
+                width: double.infinity,
                 fit: BoxFit.cover,
-                opacity: 0.6,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  height: 180,
+                  color: Colors.grey[300],
+                  child: const Center(child: Icon(Icons.image_not_supported)),
+                ),
               ),
             ),
-            padding: const EdgeInsets.all(10),
-            child: Center(
-              child: Text(
-                currentLanguage == Language.english
-                    ? (item.title_en ?? 'Default Title')
-                    : (item.title ?? 'Default Title'),
-                style: const TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white),
-                textAlign: TextAlign.center,
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Text(
+                    isTour
+                        ? (item as Tour).title_en
+                        : (item as Location).title_en ??
+                            (item as Location).title,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Description
+                  Text(
+                    isTour
+                        ? (item as Tour).description_en
+                        : (item as Location).description_en ??
+                            (item as Location).description ??
+                            '',
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
               ),
             ),
-          ),
+          ],
         ),
       ),
     );

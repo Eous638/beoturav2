@@ -67,6 +67,10 @@ class LocalizationHelper {
     'discover': 'Discover Belgrade',
     'explore_tours_desc': 'Explore curated tours around the city',
     'discover_locations_desc': 'Find interesting places and landmarks',
+    'blog': 'Blog',
+    'no_blogs_available': 'No blog posts available',
+    'error_loading_blogs': 'Error loading blog posts',
+    'try_again': 'Try Again',
   };
 
   final _serbianTranslations = {
@@ -113,5 +117,9 @@ class LocalizationHelper {
     'discover': 'Otkrijte Beograd',
     'explore_tours_desc': 'Istražite pripremljene ture po gradu',
     'discover_locations_desc': 'Pronađite zanimljiva mesta i znamenitosti',
+    'blog': 'Blog',
+    'no_blogs_available': 'Nema dostupnih blog postova',
+    'error_loading_blogs': 'Greška pri učitavanju blog postova',
+    'try_again': 'Pokušaj ponovo',
   };
 }

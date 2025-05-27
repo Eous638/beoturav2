@@ -27,6 +27,7 @@ class LocationProvider extends AsyncNotifier<List<Location>> {
       }
 
       final data = result.data?['locations'] as List<dynamic>?;
+      print(data);
 
       if (data == null) {
         return [];

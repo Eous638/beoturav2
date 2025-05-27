@@ -10,7 +10,7 @@ import 'screens/settings_screen.dart';
 import 'screens/tours_screen.dart';
 import 'screens/locations_screen.dart';
 import 'screens/language_screen.dart';
-import 'screens/home_screen.dart'; // Ensure this import is present
+import 'screens/blog_screen.dart'; // Updated import
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -19,7 +19,6 @@ import './providers/language_provider.dart';
 import './providers/position_provider.dart';
 import './providers/theme_provider.dart'
     as app_theme; // Add alias to avoid name conflicts
-import 'dart:io';
 import 'package:uuid/uuid.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart'; // Import Firebase options
@@ -85,13 +84,16 @@ void main() async {
   runApp(const ProviderScope(child: MyApp()));
 }
 
+// Create a provider to manage back press handling
+final backPressHandlerProvider = StateProvider<DateTime?>((ref) => null);
+
 class MyApp extends StatefulHookConsumerWidget {
   const MyApp({super.key});
 
   static final List<Widget> _pages = <Widget>[
     const LanguageScreen(),
     const ToursScreen(),
-    const HomeScreen(), // Make sure HomeScreen is included here
+    const BlogScreen(), // Updated to BlogScreen
     const LocationsScreen(),
     const SettingsScreen(),
   ];
@@ -141,6 +143,30 @@ class _MyAppState extends ConsumerState<MyApp> {
 
   final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
+  // Method to handle back button press with double-tap protection
+  Future<bool> _handleBackPress() async {
+    final DateTime now = DateTime.now();
+    final lastPress = ref.read(backPressHandlerProvider);
+
+    // If this is the first back press or more than 2 seconds have passed since the last one
+    if (lastPress == null ||
+        now.difference(lastPress) > const Duration(seconds: 2)) {
+      ref.read(backPressHandlerProvider.notifier).state = now;
+
+      // Show a toast or snackbar indicating to press back again
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Press back again to exit'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      return false; // Don't exit the app
+    }
+
+    return true; // Allow the app to exit
+  }
+
   @override
   Widget build(BuildContext context) {
     final singleRoute = ref.watch(singleRouteProvider);
@@ -166,57 +192,156 @@ class _MyAppState extends ConsumerState<MyApp> {
       title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-              seedColor: Colors.deepPurple, // Changed to deepPurple
-              brightness: Brightness.light), // Light mode
-          useMaterial3: true,
-          textTheme: GoogleFonts.openSansTextTheme(
-            Theme.of(context).textTheme,
-          ).apply(bodyColor: Colors.black)), // Black text for light mode
-      darkTheme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-              seedColor: Colors.deepPurple, // Changed to deepPurple
-              brightness: Brightness.dark),
-          useMaterial3: true,
-          textTheme: GoogleFonts.openSansTextTheme(
-            Theme.of(context).textTheme,
-          ).apply(bodyColor: Colors.white)), // White text for dark mode
-      themeMode: isDarkMode
-          ? ThemeMode.dark
-          : ThemeMode.light, // Now using Flutter's ThemeMode without conflict
-      home: Scaffold(
-        bottomNavigationBar: BottomNavigationBar(
-          type: BottomNavigationBarType.fixed,
-          items: <BottomNavigationBarItem>[
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.language_outlined),
-              label: l10n.translate('language'),
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.map_outlined),
-              label: l10n.translate('Tours'),
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.home_outlined),
-              label: l10n.translate('home'),
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.location_pin),
-              label: l10n.translate('locations'),
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(
-                  Icons.settings), // Changed icon from school to settings
-              label: l10n.translate(
-                  'settings'), // Changed label from "about" to "settings"
-            ),
-          ],
-          currentIndex: navigationState.value,
-          selectedItemColor: Colors.deepPurple, // Changed to purple
-          onTap: onItemTapped,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.grey,
+          primary: Colors.grey[800],
+          secondary: Colors.grey[600],
+          surface: Colors.grey[100],
+          background: Colors.grey[50],
+          brightness: Brightness.light,
         ),
-        body: Center(
-          child: MyApp._pages.elementAt(navigationState.value),
+        scaffoldBackgroundColor: Colors.grey[50],
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.grey[50],
+          foregroundColor: const Color(0xFF141414),
+          elevation: 0,
+        ),
+        cardTheme: CardTheme(
+          color: Colors.white,
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        textTheme: GoogleFonts.domineTextTheme(
+          Theme.of(context).textTheme.copyWith(
+                // Headings with Domine
+                headlineLarge: TextStyle(
+                    color: const Color(0xFF141414),
+                    fontFamily: GoogleFonts.domine().fontFamily),
+                headlineMedium: TextStyle(
+                    color: const Color(0xFF141414),
+                    fontFamily: GoogleFonts.domine().fontFamily),
+                headlineSmall: TextStyle(
+                    color: const Color(0xFF141414),
+                    fontFamily: GoogleFonts.domine().fontFamily),
+                titleLarge: TextStyle(
+                    color: const Color(0xFF141414),
+                    fontFamily: GoogleFonts.domine().fontFamily),
+                titleMedium: TextStyle(
+                    color: const Color(0xFF141414),
+                    fontFamily: GoogleFonts.domine().fontFamily),
+                titleSmall: TextStyle(
+                    color: const Color(0xFF141414),
+                    fontFamily: GoogleFonts.domine().fontFamily),
+                // Body with Playfair Display
+                bodyLarge: TextStyle(
+                    color: const Color(0xFF141414),
+                    fontFamily: GoogleFonts.playfairDisplay().fontFamily),
+                bodyMedium: TextStyle(
+                    color: const Color(0xFF141414),
+                    fontFamily: GoogleFonts.playfairDisplay().fontFamily),
+                bodySmall: TextStyle(
+                    color: const Color(0xFF141414),
+                    fontFamily: GoogleFonts.playfairDisplay().fontFamily),
+              ),
+        ),
+        useMaterial3: true,
+      ),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.grey,
+          primary: Colors.grey[700],
+          secondary: Colors.grey[500],
+          surface: const Color(0xFF1E1E1E),
+          background: const Color(0xFF141414),
+          brightness: Brightness.dark,
+        ),
+        scaffoldBackgroundColor: const Color(0xFF141414),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF141414),
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
+        cardTheme: CardTheme(
+          color: const Color(0xFF1E1E1E),
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        textTheme: GoogleFonts.domineTextTheme(
+          Theme.of(context).textTheme.copyWith(
+                // Headings with Domine
+                headlineLarge: TextStyle(
+                    color: Colors.white,
+                    fontFamily: GoogleFonts.domine().fontFamily),
+                headlineMedium: TextStyle(
+                    color: Colors.white,
+                    fontFamily: GoogleFonts.domine().fontFamily),
+                headlineSmall: TextStyle(
+                    color: Colors.white,
+                    fontFamily: GoogleFonts.domine().fontFamily),
+                titleLarge: TextStyle(
+                    color: Colors.white,
+                    fontFamily: GoogleFonts.domine().fontFamily),
+                titleMedium: TextStyle(
+                    color: Colors.white,
+                    fontFamily: GoogleFonts.domine().fontFamily),
+                titleSmall: TextStyle(
+                    color: Colors.white,
+                    fontFamily: GoogleFonts.domine().fontFamily),
+                // Body with Playfair Display
+                bodyLarge: TextStyle(
+                    color: Colors.white,
+                    fontFamily: GoogleFonts.playfairDisplay().fontFamily),
+                bodyMedium: TextStyle(
+                    color: Colors.white,
+                    fontFamily: GoogleFonts.playfairDisplay().fontFamily),
+                bodySmall: TextStyle(
+                    color: Colors.white,
+                    fontFamily: GoogleFonts.playfairDisplay().fontFamily),
+              ),
+        ),
+        useMaterial3: true,
+      ),
+      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      home: WillPopScope(
+        onWillPop: _handleBackPress,
+        child: Scaffold(
+          bottomNavigationBar: BottomNavigationBar(
+            type: BottomNavigationBarType.fixed,
+            items: <BottomNavigationBarItem>[
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.language_outlined),
+                label: l10n.translate('language'),
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.map_outlined),
+                label: l10n.translate('Tours'),
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(
+                    Icons.article_outlined), // Changed to article icon
+                label: l10n.translate('blog'), // Changed label to blog
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.location_pin),
+                label: l10n.translate('locations'),
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.settings),
+                label: l10n.translate('settings'),
+              ),
+            ],
+            currentIndex: navigationState.value,
+            selectedItemColor:
+                isDarkMode ? Colors.white : const Color(0xFF141414),
+            unselectedItemColor:
+                isDarkMode ? Colors.grey[400] : Colors.grey[600],
+            backgroundColor:
+                isDarkMode ? const Color(0xFF141414) : Colors.white,
+            onTap: onItemTapped,
+          ),
+          body: Center(
+            child: MyApp._pages.elementAt(navigationState.value),
+          ),
         ),
       ),
     );
