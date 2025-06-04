@@ -17,24 +17,27 @@ class ToursScreen extends ConsumerWidget {
     final AsyncValue<List<Tour>> tours = ref.watch(tourProviderProvider);
     final currentLanguage = ref.watch(languageProvider);
     final l10n = LocalizationHelper(ref);
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    // final isDarkMode = Theme.of(context).brightness == Brightness.dark; // Not explicitly needed if using Theme.of(context)
 
     Future<void> refreshTours() async {
-      await ref.refresh(tourProviderProvider.future);
+      // Assign to underscore to indicate the result is intentionally not used.
+      final _ = await ref.refresh(tourProviderProvider.future);
     }
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
           l10n.translate('Tours'),
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.5,
-          ),
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                // Use theme
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        backgroundColor:
+            Theme.of(context).appBarTheme.backgroundColor, // Use theme
+        elevation: Theme.of(context).appBarTheme.elevation, // Use theme
       ),
       body: RefreshIndicator(
         onRefresh: refreshTours,
@@ -43,7 +46,8 @@ class ToursScreen extends ConsumerWidget {
           error: (error, stackTrace) => Center(
             child: Text(
               'Error: $error',
-              style: const TextStyle(color: Colors.red),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.error), // Use theme
             ),
           ),
           data: (toursData) => toursData.isEmpty
@@ -51,23 +55,29 @@ class ToursScreen extends ConsumerWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.map_outlined,
-                          size: 64, color: Colors.grey),
+                      Icon(Icons.map_outlined,
+                          size: 64,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.6)), // Use theme
                       const SizedBox(height: 16),
                       Text(
                         l10n.translate('No Tours Found'),
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineSmall, // Use theme
                       ),
                       const SizedBox(height: 8),
                       Text(
                         l10n.translate('Check back later for new experiences'),
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              // Use theme
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withOpacity(0.8),
+                            ),
                       ),
                     ],
                   ),
@@ -85,10 +95,11 @@ class ToursScreen extends ConsumerWidget {
                               horizontal: 16.0, vertical: 8.0),
                           child: Text(
                             l10n.translate('Featured'),
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineMedium
+                                ?.copyWith(
+                                    fontWeight: FontWeight.bold), // Use theme
                           ),
                         ),
                       if (toursData.isNotEmpty)
@@ -98,7 +109,7 @@ class ToursScreen extends ConsumerWidget {
                             context: context,
                             tour: toursData.first,
                             currentLanguage: currentLanguage,
-                            isDarkMode: isDarkMode,
+                            // isDarkMode: isDarkMode, // Pass context instead or derive from Theme.of(context) inside
                           ),
                         ),
 
@@ -108,10 +119,11 @@ class ToursScreen extends ConsumerWidget {
                             left: 16.0, right: 16.0, top: 24.0, bottom: 12.0),
                         child: Text(
                           l10n.translate('All Tours'),
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineMedium
+                              ?.copyWith(
+                                  fontWeight: FontWeight.bold), // Use theme
                         ),
                       ),
 
@@ -138,7 +150,7 @@ class ToursScreen extends ConsumerWidget {
                                 context: context,
                                 tour: toursData[1],
                                 currentLanguage: currentLanguage,
-                                isDarkMode: isDarkMode,
+                                // isDarkMode: isDarkMode,
                               );
                             } else if (index == 1 && toursData.length > 1) {
                               // Skip rendering again
@@ -148,14 +160,14 @@ class ToursScreen extends ConsumerWidget {
                                     ? index + 1
                                     : index],
                                 currentLanguage: currentLanguage,
-                                isDarkMode: isDarkMode,
+                                // isDarkMode: isDarkMode,
                               );
                             }
                             return _buildTourCard(
                               context: context,
                               tour: tour,
                               currentLanguage: currentLanguage,
-                              isDarkMode: isDarkMode,
+                              // isDarkMode: isDarkMode,
                             );
                           },
                         ),
@@ -173,7 +185,7 @@ class ToursScreen extends ConsumerWidget {
     required BuildContext context,
     required Tour tour,
     required Language currentLanguage,
-    required bool isDarkMode,
+    // required bool isDarkMode, // Use Theme.of(context)
   }) {
     final title =
         currentLanguage == Language.english ? tour.title_en : tour.title_rs;
@@ -191,7 +203,8 @@ class ToursScreen extends ConsumerWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color:
+                  Theme.of(context).shadowColor.withOpacity(0.2), // Use theme
               spreadRadius: 2,
               blurRadius: 10,
               offset: const Offset(0, 5),
@@ -204,16 +217,21 @@ class ToursScreen extends ConsumerWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(20),
               child: Image.network(
-                tour.imageUrl ?? 'https://via.placeholder.com/300', // Default placeholder URL
+                tour.imageUrl ??
+                    'https://via.placeholder.com/300', // Default placeholder URL
                 height: 300,
                 width: double.infinity,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => Container(
                   height: 300,
-                  color: Colors.grey[800],
-                  child: const Center(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .surface
+                      .withOpacity(0.5), // Use theme
+                  child: Center(
                     child: Icon(Icons.image_not_supported,
-                        color: Colors.white, size: 50),
+                        color: Theme.of(context).colorScheme.onSurface,
+                        size: 50), // Use theme
                   ),
                 ),
               ),
@@ -227,8 +245,14 @@ class ToursScreen extends ConsumerWidget {
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.transparent,
-                    Colors.black.withOpacity(0.3),
-                    Colors.black.withOpacity(0.8),
+                    Theme.of(context)
+                        .colorScheme
+                        .surface
+                        .withOpacity(0.3), // Use theme for scrim
+                    Theme.of(context)
+                        .colorScheme
+                        .surface
+                        .withOpacity(0.8), // Use theme for scrim
                   ],
                   stops: const [0.5, 0.75, 1.0],
                 ),
@@ -249,13 +273,18 @@ class ToursScreen extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surface
+                            .withOpacity(0.2), // Use theme
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         '${tour.locations.length} locations',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface, // Use theme
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
@@ -265,8 +294,10 @@ class ToursScreen extends ConsumerWidget {
                     // Tour title
                     Text(
                       title,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface, // Use theme (assuming overlay makes it readable)
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.3,
@@ -278,8 +309,10 @@ class ToursScreen extends ConsumerWidget {
                     // Tour description
                     Text(
                       description,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface, // Use theme
                         fontSize: 14,
                         height: 1.3,
                       ),
@@ -298,19 +331,24 @@ class ToursScreen extends ConsumerWidget {
                             color: Theme.of(context).colorScheme.primary,
                             borderRadius: BorderRadius.circular(30),
                           ),
-                          child: const Row(
+                          child: Row(
+                            // Removed const from here
                             children: [
                               Text(
                                 'Start Tour',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onPrimary, // Use theme
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               SizedBox(width: 8),
                               Icon(
                                 Icons.arrow_forward_rounded,
-                                color: Colors.white,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onPrimary, // Use theme
                                 size: 16,
                               )
                             ],
@@ -333,7 +371,7 @@ class ToursScreen extends ConsumerWidget {
     required BuildContext context,
     required Tour tour,
     required Language currentLanguage,
-    required bool isDarkMode,
+    // required bool isDarkMode, // Use Theme.of(context)
   }) {
     final title =
         currentLanguage == Language.english ? tour.title_en : tour.title_rs;
@@ -347,7 +385,8 @@ class ToursScreen extends ConsumerWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.15),
+              color:
+                  Theme.of(context).shadowColor.withOpacity(0.15), // Use theme
               spreadRadius: 1,
               blurRadius: 8,
               offset: const Offset(0, 3),
@@ -365,10 +404,14 @@ class ToursScreen extends ConsumerWidget {
                 width: double.infinity,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => Container(
-                  color: Colors.grey[800],
-                  child: const Center(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .surface
+                      .withOpacity(0.5), // Use theme
+                  child: Center(
                     child: Icon(Icons.image_not_supported,
-                        color: Colors.white, size: 30),
+                        color: Theme.of(context).colorScheme.onSurface,
+                        size: 30), // Use theme
                   ),
                 ),
               ),
@@ -382,7 +425,10 @@ class ToursScreen extends ConsumerWidget {
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.transparent,
-                    Colors.black.withOpacity(0.8),
+                    Theme.of(context)
+                        .colorScheme
+                        .surface
+                        .withOpacity(0.8), // Use theme for scrim
                   ],
                   stops: const [0.6, 1.0],
                 ),
@@ -403,13 +449,18 @@ class ToursScreen extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surface
+                            .withOpacity(0.2), // Use theme
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         '${tour.locations.length}',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface, // Use theme
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
                         ),
@@ -419,8 +470,10 @@ class ToursScreen extends ConsumerWidget {
                     // Tour title
                     Text(
                       title,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface, // Use theme
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),

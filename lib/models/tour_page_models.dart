@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:flutter/foundation.dart';
 
 /// Base class for all tour page types
 abstract class TourPage {

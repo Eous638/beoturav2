@@ -1,8 +1,9 @@
 import 'package:beotura/enums/venue_vibe.dart';
 import 'package:beotura/enums/venue_type.dart';
-import 'package:beotura/enums/venue_area.dart'; // Added
+import 'package:beotura/enums/venue_area.dart';
+import 'package:beotura/screens/venue_detail_screen.dart'; // Added import
 import 'package:flutter/material.dart';
-import 'dart:ui'; // Import for ImageFilter
+// Import for ImageFilter
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'dart:math'; // Import for Random
@@ -27,7 +28,7 @@ class _VenuesScreenState extends ConsumerState<VenuesScreen> {
       description:
           'A historic bar with a wide selection of local craft beers. Known for its cozy atmosphere and traditional Serbian snacks.',
       vibe: VenueVibe.HISTORIC_AUTHENTIC,
-      area: VenueArea.UPPER_DORCOL, // Updated
+      area: VenueArea.UPPER_DORCOL,
     ),
     Venue(
       id: '2',
@@ -37,7 +38,7 @@ class _VenuesScreenState extends ConsumerState<VenuesScreen> {
       description:
           'Serving classic Roman dishes in a charming setting. Features a beautiful courtyard garden.',
       vibe: VenueVibe.ELEGANT_ROMANTIC,
-      area: VenueArea.TRG, // Updated
+      area: VenueArea.TRG,
     ),
     Venue(
       id: '3',
@@ -47,7 +48,7 @@ class _VenuesScreenState extends ConsumerState<VenuesScreen> {
       description:
           'A popular meeting spot for locals and tourists alike. Offers a variety of coffees, pastries, and light meals.',
       vibe: VenueVibe.LIVELY_TRENDY,
-      area: VenueArea.KNEZ_MIHAILOVA, // Updated
+      area: VenueArea.KNEZ_MIHAILOVA,
     ),
     Venue(
       id: '4',
@@ -57,7 +58,7 @@ class _VenuesScreenState extends ConsumerState<VenuesScreen> {
       description:
           'Explore Serbian art and history from prehistoric times to the present day.',
       vibe: VenueVibe.HISTORIC_AUTHENTIC,
-      area: VenueArea.TRG, // Updated
+      area: VenueArea.TRG,
     ),
     Venue(
       id: '5',
@@ -67,7 +68,7 @@ class _VenuesScreenState extends ConsumerState<VenuesScreen> {
       description:
           'Ancient citadel overlooking the confluence of the Sava and Danube rivers. Rich in history and offering stunning views.',
       vibe: VenueVibe.MYSTERIOUS_HIDDEN,
-      area: VenueArea.KALEMEGDAN, // Updated
+      area: VenueArea.KALEMEGDAN,
     ),
     Venue(
       id: '6',
@@ -77,7 +78,7 @@ class _VenuesScreenState extends ConsumerState<VenuesScreen> {
       description:
           'Famous cobblestone street with traditional restaurants, live music, and art galleries.',
       vibe: VenueVibe.ARTISTIC_BOHEMIAN,
-      area: VenueArea.SKADARLIJA, // Updated
+      area: VenueArea.SKADARLIJA,
     ),
     Venue(
       id: '7',
@@ -87,9 +88,8 @@ class _VenuesScreenState extends ConsumerState<VenuesScreen> {
       description:
           'Contemporary art space featuring local and international artists.',
       vibe: VenueVibe.ARTISTIC_BOHEMIAN,
-      area: VenueArea.DORCOL, // Updated
+      area: VenueArea.DORCOL,
     ),
-    // Add a few more diverse venues
     Venue(
       id: '8',
       name: 'Sava Promenade',
@@ -119,6 +119,17 @@ class _VenuesScreenState extends ConsumerState<VenuesScreen> {
           'A large modern shopping mall with a wide variety of stores, a cinema, and food court.',
       vibe: VenueVibe.LIVELY_TRENDY,
       area: VenueArea.NEW_BELGRADE,
+    ),
+    Venue(
+      // Added a SHOW type venue for testing
+      id: '11',
+      name: 'Belgrade Drama Theatre',
+      type: VenueType.SHOW,
+      imageUrl: 'https://picsum.photos/seed/venue11/800/600',
+      description:
+          'Catch captivating theatrical performances at one of Belgrade\'s most renowned theatres.',
+      vibe: VenueVibe.ELEGANT_ROMANTIC, // Example vibe
+      area: VenueArea.VRACAR, // Example area
     ),
   ];
 
@@ -201,8 +212,7 @@ class _VenuesScreenState extends ConsumerState<VenuesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final selectedFilter = useState<Object?>(
-        null); // Can be VenueVibe, VenueType, or null (for All)
+    final selectedFilter = useState<Object?>(null);
 
     final filteredVenues = _allVenues.where((venue) {
       if (selectedFilter.value == null) return true; // "All Venues"
@@ -258,91 +268,106 @@ class _VenuesScreenState extends ConsumerState<VenuesScreen> {
                 final venue = filteredVenues[index];
                 final vibeTheme = VibeTheme.getTheme(venue.vibe);
 
-                return Card(
-                  margin: const EdgeInsets.symmetric(
-                      horizontal: 16.0, vertical: 10.0),
-                  color: vibeTheme.backgroundColor.withOpacity(0.85),
-                  clipBehavior: Clip.antiAlias,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  elevation: 8,
-                  shadowColor: vibeTheme.accentColor.withOpacity(0.3),
-                  child: Stack(
-                    alignment: Alignment.bottomLeft,
-                    children: [
-                      Image.network(
-                        venue.imageUrl,
-                        height: 280,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
+                return InkWell(
+                  // Wrapped Card with InkWell
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => VenueDetailScreen(venue: venue),
                       ),
-                      Positioned.fill(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.black.withOpacity(0.7),
-                                Colors.black.withOpacity(0.1),
-                                Colors.transparent,
-                              ],
-                              begin: Alignment.bottomCenter,
-                              end: Alignment.topCenter,
-                              stops: const [0.0, 0.5, 1.0],
+                    );
+                  },
+                  child: Card(
+                    margin: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 10.0),
+                    color: vibeTheme.backgroundColor.withOpacity(0.85),
+                    clipBehavior: Clip.antiAlias,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 8,
+                    shadowColor: vibeTheme.accentColor.withOpacity(0.3),
+                    child: Stack(
+                      alignment: Alignment.bottomLeft,
+                      children: [
+                        Hero(
+                          // Added Hero widget for image transition
+                          tag: 'venue-image-${venue.id}',
+                          child: Image.network(
+                            venue.imageUrl,
+                            height: 280,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        Positioned.fill(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.black.withOpacity(0.7),
+                                  Colors.black.withOpacity(0.1),
+                                  Colors.transparent,
+                                ],
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                                stops: const [0.0, 0.5, 1.0],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              venue.name,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .headlineSmall
-                                  ?.copyWith(
-                                color: vibeTheme.accentColor,
-                                fontWeight: FontWeight.bold,
-                                shadows: [
-                                  const Shadow(
-                                    blurRadius: 2.0,
-                                    color: Colors.black54,
-                                    offset: Offset(1.0, 1.0),
-                                  ),
-                                ],
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                venue.name,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineSmall
+                                    ?.copyWith(
+                                  color: vibeTheme.accentColor,
+                                  fontWeight: FontWeight.bold,
+                                  shadows: [
+                                    const Shadow(
+                                      blurRadius: 2.0,
+                                      color: Colors.black54,
+                                      offset: Offset(1.0, 1.0),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              // Using displayName for area as well
-                              '${venue.type.displayName} - ${venue.area.displayName}',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
-                                  ?.copyWith(
-                                    color: Colors.white.withOpacity(0.9),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                            ),
-                            const SizedBox(height: 8),
-                            Chip(
-                              label: Text(venue.vibe.displayName),
-                              backgroundColor: vibeTheme.accentColor,
-                              labelStyle: TextStyle(
-                                  color: vibeTheme.onAccentColor,
-                                  fontWeight: FontWeight.bold),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
-                              elevation: 2,
-                            ),
-                          ],
+                              const SizedBox(height: 4),
+                              Text(
+                                // Using displayName for area as well
+                                '${venue.type.displayName} - ${venue.area.displayName}',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(
+                                      color: Colors.white.withOpacity(0.9),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                              ),
+                              const SizedBox(height: 8),
+                              Chip(
+                                label: Text(venue.vibe.displayName),
+                                backgroundColor: vibeTheme.accentColor,
+                                labelStyle: TextStyle(
+                                    color: vibeTheme.onAccentColor,
+                                    fontWeight: FontWeight.bold),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                elevation: 2,
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 );
               },

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../widgets/tour_components/map_component.dart';
+import '../widgets/tour_components/map_component.dart' as map_component;
 
 /// Base class for all tour page types
 abstract class TourPage {
@@ -37,7 +37,7 @@ class NavigationPage extends TourPage {
   final String? imageUrl;
   final String instructions;
   final bool showMap;
-  final List<MapMarker>? mapMarkers;
+  final List<map_component.MapMarker>? mapMarkers;
   final double? targetLatitude;
   final double? targetLongitude;
 
@@ -54,11 +54,11 @@ class NavigationPage extends TourPage {
   }) : super(type: 'nav');
 
   factory NavigationPage.fromJson(Map<String, dynamic> json) {
-    List<MapMarker>? markers;
+    List<map_component.MapMarker>? markers;
 
     if (json['mapMarkers'] != null) {
       markers = (json['mapMarkers'] as List)
-          .map((marker) => MapMarker(
+          .map((marker) => map_component.MapMarker(
                 lat: marker['lat'] ?? 0.0,
                 lng: marker['lng'] ?? 0.0,
                 label: marker['label'] ?? '',

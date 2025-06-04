@@ -25,6 +25,7 @@ import 'firebase_options.dart'; // Import Firebase options
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
+import 'screens/explore_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,10 +61,11 @@ void main() async {
 
   // Start the download
   try {
-    final (:downloadProgress, :tileEvents) =
-        const FMTCStore('mapStore').download.startForeground(
-              region: downloadableRegion,
-            );
+    // Commented out unused variables
+    // final (:downloadProgress, :tileEvents) =
+    const FMTCStore('mapStore').download.startForeground(
+          region: downloadableRegion,
+        );
   } catch (e) {
     // Handle connection refused and default to OSM
     final osmRegion = region.toDownloadable(
@@ -75,10 +77,11 @@ void main() async {
       ),
     );
 
-    final (:downloadProgress, :tileEvents) =
-        const FMTCStore('mapStore').download.startForeground(
-              region: osmRegion,
-            );
+    // Commented out unused variables
+    // final (:downloadProgress, :tileEvents) =
+    const FMTCStore('mapStore').download.startForeground(
+          region: osmRegion,
+        );
   }
 
   runApp(const ProviderScope(child: MyApp()));
@@ -89,14 +92,6 @@ final backPressHandlerProvider = StateProvider<DateTime?>((ref) => null);
 
 class MyApp extends StatefulHookConsumerWidget {
   const MyApp({super.key});
-
-  static final List<Widget> _pages = <Widget>[
-    const VenuesScreen(), // Changed LanguageScreen to VenuesScreen
-    const ToursScreen(),
-    const BlogScreen(), // Updated to BlogScreen
-    const LocationsScreen(),
-    const SettingsScreen(),
-  ];
 
   @override
   ConsumerState<MyApp> createState() => _MyAppState();
@@ -169,105 +164,53 @@ class _MyAppState extends ConsumerState<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    final singleRoute = ref.watch(singleRouteProvider);
-    final l10n = LocalizationHelper(ref);
-    final currentPosition = ref.watch(positionProvider);
-    final isDarkMode =
-        ref.watch(app_theme.isDarkModeProvider); // Use aliased import
-
-    if (currentPosition != null) {
-      singleRoute.originLatitude = currentPosition.latitude;
-      singleRoute.originLongitude = currentPosition.longitude;
-    }
-    final navigationState = useState(2);
+    final isDarkMode = ref.watch(app_theme.isDarkModeProvider);
+    final navigationState = useState(0); // Set initial page to Explore
     void onItemTapped(int index) {
       navigationState.value = index;
     }
 
-    final tileProvider = FMTCTileProvider(
-      stores: const {'mapStore': BrowseStoreStrategy.readUpdateCreate},
-    );
+    final List<Widget> pages = <Widget>[
+      const ExploreScreen(),
+      // Placeholder for Map
+      Center(child: Icon(Icons.map, size: 80, color: Colors.white24)),
+      // Placeholder for Profile
+      Center(child: Icon(Icons.person, size: 80, color: Colors.white24)),
+    ];
 
     return MaterialApp(
       title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.grey,
-          primary: Colors.grey[800],
-          secondary: Colors.grey[600],
-          surface: Colors.grey[100],
-          background: Colors.grey[50],
-          brightness: Brightness.light,
+          seedColor: const Color(0xFF161211), // --smoky-black
+          primary: const Color(0xFFB42020), // --fire-brick (accent)
+          secondary: const Color(0xFF243735), // --gunmetal (subtle tint)
+          surface: const Color(0xFF243735), // --gunmetal (for cards/surfaces)
+          background: const Color(0xFF161211), // --smoky-black
+          error: const Color(0xFF611924), // --chocolate-cosmos
+          onPrimary: Colors.white,
+          onSecondary: Colors.white,
+          onSurface: Colors.white,
+          onBackground: Colors.white,
+          onError: Colors.white,
+          brightness: Brightness.dark, // Base theme is dark
         ),
-        scaffoldBackgroundColor: Colors.grey[50],
+        scaffoldBackgroundColor: const Color(0xFF161211), // --smoky-black
         appBarTheme: AppBarTheme(
-          backgroundColor: Colors.grey[50],
-          foregroundColor: const Color(0xFF141414),
-          elevation: 0,
-        ),
-        cardTheme: CardTheme(
-          color: Colors.white,
-          elevation: 2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-        textTheme: GoogleFonts.domineTextTheme(
-          Theme.of(context).textTheme.copyWith(
-                // Headings with Domine
-                headlineLarge: TextStyle(
-                    color: const Color(0xFF141414),
-                    fontFamily: GoogleFonts.domine().fontFamily),
-                headlineMedium: TextStyle(
-                    color: const Color(0xFF141414),
-                    fontFamily: GoogleFonts.domine().fontFamily),
-                headlineSmall: TextStyle(
-                    color: const Color(0xFF141414),
-                    fontFamily: GoogleFonts.domine().fontFamily),
-                titleLarge: TextStyle(
-                    color: const Color(0xFF141414),
-                    fontFamily: GoogleFonts.domine().fontFamily),
-                titleMedium: TextStyle(
-                    color: const Color(0xFF141414),
-                    fontFamily: GoogleFonts.domine().fontFamily),
-                titleSmall: TextStyle(
-                    color: const Color(0xFF141414),
-                    fontFamily: GoogleFonts.domine().fontFamily),
-                // Body with Playfair Display
-                bodyLarge: TextStyle(
-                    color: const Color(0xFF141414),
-                    fontFamily: GoogleFonts.playfairDisplay().fontFamily),
-                bodyMedium: TextStyle(
-                    color: const Color(0xFF141414),
-                    fontFamily: GoogleFonts.playfairDisplay().fontFamily),
-                bodySmall: TextStyle(
-                    color: const Color(0xFF141414),
-                    fontFamily: GoogleFonts.playfairDisplay().fontFamily),
-              ),
-        ),
-        useMaterial3: true,
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.grey,
-          primary: Colors.grey[700],
-          secondary: Colors.grey[500],
-          surface: const Color(0xFF1E1E1E),
-          background: const Color(0xFF141414),
-          brightness: Brightness.dark,
-        ),
-        scaffoldBackgroundColor: const Color(0xFF141414),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF141414),
+          backgroundColor: const Color(0xFF161211), // --smoky-black
           foregroundColor: Colors.white,
           elevation: 0,
         ),
         cardTheme: CardTheme(
-          color: const Color(0xFF1E1E1E),
+          color: const Color(0xFF243735), // --gunmetal
           elevation: 2,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
         textTheme: GoogleFonts.domineTextTheme(
-          Theme.of(context).textTheme.copyWith(
+          Theme.of(context)
+              .textTheme
+              .copyWith(
                 // Headings with Domine
                 headlineLarge: TextStyle(
                     color: Colors.white,
@@ -297,7 +240,79 @@ class _MyAppState extends ConsumerState<MyApp> {
                 bodySmall: TextStyle(
                     color: Colors.white,
                     fontFamily: GoogleFonts.playfairDisplay().fontFamily),
-              ),
+              )
+              .apply(
+                  bodyColor: Colors.white,
+                  displayColor:
+                      Colors.white), // Ensure all text is white by default
+        ),
+        useMaterial3: true,
+      ),
+      darkTheme: ThemeData(
+        // Dark theme will use the same new palette
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF161211), // --smoky-black
+          primary: const Color(0xFFB42020), // --fire-brick (accent)
+          secondary: const Color(0xFF243735), // --gunmetal (subtle tint)
+          surface: const Color(0xFF243735), // --gunmetal (for cards/surfaces)
+          background: const Color(0xFF161211), // --smoky-black
+          error: const Color(0xFF611924), // --chocolate-cosmos
+          onPrimary: Colors.white,
+          onSecondary: Colors.white,
+          onSurface: Colors.white,
+          onBackground: Colors.white,
+          onError: Colors.white,
+          brightness: Brightness.dark,
+        ),
+        scaffoldBackgroundColor: const Color(0xFF161211), // --smoky-black
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF161211), // --smoky-black
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
+        cardTheme: CardTheme(
+          color: const Color(0xFF243735), // --gunmetal
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        textTheme: GoogleFonts.domineTextTheme(
+          Theme.of(context)
+              .textTheme
+              .copyWith(
+                // Headings with Domine
+                headlineLarge: TextStyle(
+                    color: Colors.white,
+                    fontFamily: GoogleFonts.domine().fontFamily),
+                headlineMedium: TextStyle(
+                    color: Colors.white,
+                    fontFamily: GoogleFonts.domine().fontFamily),
+                headlineSmall: TextStyle(
+                    color: Colors.white,
+                    fontFamily: GoogleFonts.domine().fontFamily),
+                titleLarge: TextStyle(
+                    color: Colors.white,
+                    fontFamily: GoogleFonts.domine().fontFamily),
+                titleMedium: TextStyle(
+                    color: Colors.white,
+                    fontFamily: GoogleFonts.domine().fontFamily),
+                titleSmall: TextStyle(
+                    color: Colors.white,
+                    fontFamily: GoogleFonts.domine().fontFamily),
+                // Body with Playfair Display
+                bodyLarge: TextStyle(
+                    color: Colors.white,
+                    fontFamily: GoogleFonts.playfairDisplay().fontFamily),
+                bodyMedium: TextStyle(
+                    color: Colors.white,
+                    fontFamily: GoogleFonts.playfairDisplay().fontFamily),
+                bodySmall: TextStyle(
+                    color: Colors.white,
+                    fontFamily: GoogleFonts.playfairDisplay().fontFamily),
+              )
+              .apply(
+                  bodyColor: Colors.white,
+                  displayColor:
+                      Colors.white), // Ensure all text is white by default
         ),
         useMaterial3: true,
       ),
@@ -307,42 +322,27 @@ class _MyAppState extends ConsumerState<MyApp> {
         child: Scaffold(
           bottomNavigationBar: BottomNavigationBar(
             type: BottomNavigationBarType.fixed,
-            items: <BottomNavigationBarItem>[
+            items: const <BottomNavigationBarItem>[
               BottomNavigationBarItem(
-                icon:
-                    const Icon(Icons.museum_outlined), // Changed icon to museum
-                label: l10n.translate('venues'), // Changed label
+                icon: Icon(Icons.home),
+                label: 'Explore',
               ),
               BottomNavigationBarItem(
-                icon: const Icon(Icons.map_outlined),
-                label: l10n.translate('Tours'),
+                icon: Icon(Icons.map),
+                label: 'Map',
               ),
               BottomNavigationBarItem(
-                icon: const Icon(
-                    Icons.article_outlined), // Changed to article icon
-                label: l10n.translate('blog'), // Changed label to blog
-              ),
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.location_pin),
-                label: l10n.translate('locations'),
-              ),
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.settings),
-                label: l10n.translate('settings'),
+                icon: Icon(Icons.person),
+                label: 'Profile',
               ),
             ],
             currentIndex: navigationState.value,
-            selectedItemColor:
-                isDarkMode ? Colors.white : const Color(0xFF141414),
-            unselectedItemColor:
-                isDarkMode ? Colors.grey[400] : Colors.grey[600],
-            backgroundColor:
-                isDarkMode ? const Color(0xFF141414) : Colors.white,
+            selectedItemColor: const Color(0xFFB42020),
+            unselectedItemColor: Colors.grey,
+            backgroundColor: const Color(0xFF161211),
             onTap: onItemTapped,
           ),
-          body: Center(
-            child: MyApp._pages.elementAt(navigationState.value),
-          ),
+          body: pages[navigationState.value],
         ),
       ),
     );

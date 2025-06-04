@@ -1,5 +1,6 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../models/blog.dart';
+import '../enums/story_type_enum.dart'; // Import StoryType
 
 final blogsProvider =
     StateNotifierProvider<BlogsNotifier, AsyncValue<List<Blog>>>((ref) {
@@ -20,6 +21,7 @@ final List<Blog> mockBlogs = [
     id: '1',
     titleEn: 'The Forgotten Fortress: A Brief History of Kalemegdan',
     titleSr: 'Zaboravljena tvrđava: Kratka istorija Kalemegdana',
+    storyType: StoryType.LANDMARK_SPOTLIGHT, // Added storyType
     contentEn: {
       'document': [
         {
@@ -95,6 +97,7 @@ final List<Blog> mockBlogs = [
     id: '2',
     titleEn: 'Interview: Memories of the 1996-97 Protests',
     titleSr: 'Intervju: Sećanja na proteste 1996-97',
+    storyType: StoryType.INTERVIEW, // Added storyType
     contentEn: {
       'document': [
         {
@@ -173,6 +176,7 @@ final List<Blog> mockBlogs = [
     id: '3',
     titleEn: 'Belgrade’s Lost Cinemas',
     titleSr: 'Izgubljene bioskopske sale Beograda',
+    storyType: StoryType.VENUE_SPOTLIGHT, // Added storyType
     contentEn: {
       'document': [
         {
@@ -251,6 +255,7 @@ final List<Blog> mockBlogs = [
     id: '4',
     titleEn: 'Sounds and Stories: Multimedia in Belgrade',
     titleSr: 'Zvuci i priče: Multimedija u Beogradu',
+    storyType: StoryType.TOUR_PROMOTION, // Added storyType
     contentEn: {
       'document': [
         {
@@ -353,6 +358,67 @@ final List<Blog> mockBlogs = [
     },
     imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
     createdAt: DateTime(2024, 2, 20),
+  ),
+  // Add a general story for variety
+  Blog(
+    id: '5',
+    titleEn: 'A Walk Through Skadarlija',
+    titleSr: 'Šetnja Skadarlijom',
+    storyType: StoryType.GENERAL_STORY, // Added storyType
+    contentEn: {
+      'document': [
+        {
+          'type': 'heading',
+          'level': 2,
+          'children': [
+            {'text': 'A Walk Through Skadarlija'}
+          ]
+        },
+        {
+          'type': 'paragraph',
+          'children': [
+            {
+              'text':
+                  'Skadarlija, Belgrade\'s bohemian quarter, offers a unique glimpse into the city\'s artistic past. Cobblestone streets, traditional kafanas, and live music create an unforgettable atmosphere.'
+            }
+          ]
+        },
+        {
+          'type': 'image',
+          'src':
+              'https://images.unsplash.com/photo-1600007283621-5f7f6a5a5f3b', // Example image
+          'caption': 'Skadarlija Street'
+        }
+      ]
+    },
+    contentSr: {
+      'document': [
+        {
+          'type': 'heading',
+          'level': 2,
+          'children': [
+            {'text': 'Šetnja Skadarlijom'}
+          ]
+        },
+        {
+          'type': 'paragraph',
+          'children': [
+            {
+              'text':
+                  'Skadarlija, boemska četvrt Beograda, pruža jedinstven uvid u umetničku prošlost grada. Kaldrmisane ulice, tradicionalne kafane i živa muzika stvaraju nezaboravnu atmosferu.'
+            }
+          ]
+        },
+        {
+          'type': 'image',
+          'src':
+              'https://images.unsplash.com/photo-1600007283621-5f7f6a5a5f3b', // Example image
+          'caption': 'Skadarska ulica'
+        }
+      ]
+    },
+    imageUrl: 'https://images.unsplash.com/photo-1600007283621-5f7f6a5a5f3b',
+    createdAt: DateTime(2024, 3, 10),
   ),
 ];
 

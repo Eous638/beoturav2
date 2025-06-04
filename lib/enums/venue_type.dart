@@ -7,6 +7,7 @@ enum VenueType {
   SHOP,
   GALLERY,
   LANDMARK,
+  SHOW, // Added SHOW
   OTHER;
 
   String get displayName {
@@ -27,6 +28,8 @@ enum VenueType {
         return 'Gallery';
       case VenueType.LANDMARK:
         return 'Landmark';
+      case VenueType.SHOW: // Added SHOW
+        return 'Show';
       case VenueType.OTHER:
         return 'Other';
       default:

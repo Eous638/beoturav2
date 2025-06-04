@@ -17,11 +17,13 @@ class ImageComponent extends StatelessWidget {
     this.fullWidth = true,
     this.height,
     this.fit = BoxFit.cover,
-    this.isNetworkImage = false, required String imageUrl, required TextStyle captionStyle,
+    this.isNetworkImage = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       width: fullWidth ? double.infinity : null,
       margin: const EdgeInsets.symmetric(vertical: 16),
@@ -30,7 +32,7 @@ class ImageComponent extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: theme.shadowColor.withOpacity(0.2), // Use theme shadow color
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -44,7 +46,7 @@ class ImageComponent extends StatelessWidget {
             tag: 'tour_image_$src',
             child: GestureDetector(
               onTap: () => _showFullScreenImage(context),
-              child: _buildImage(),
+              child: _buildImage(context), // Pass context
             ),
           ),
 
@@ -53,12 +55,13 @@ class ImageComponent extends StatelessWidget {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(12),
-              color: Colors.black.withOpacity(0.7),
+              color: theme.colorScheme.surface
+                  .withOpacity(0.7), // Gunmetal with opacity
               child: Text(
                 caption!,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  // Use theme text style
+                  color: theme.colorScheme.onSurface, // White text
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -68,35 +71,49 @@ class ImageComponent extends StatelessWidget {
     );
   }
 
-  Widget _buildImage() {
+  Widget _buildImage(BuildContext context) {
+    // Add context parameter
+    final theme = Theme.of(context); // Now context is available
+    final placeholderColor =
+        theme.colorScheme.surface.withOpacity(0.5); // Gunmetal tint
+    final errorIconColor =
+        theme.colorScheme.onSurface.withOpacity(0.7); // White tint
+
     final imageWidget = isNetworkImage
         ? CachedNetworkImage(
-            imageUrl: src,
+            imageUrl: src.isNotEmpty
+                ? src
+                : 'https://source.unsplash.com/random/800x600?city,historic', // Use Unsplash for empty src
             fit: fit,
             height: height,
             width: fullWidth ? double.infinity : null,
             placeholder: (context, url) => Container(
               height: height ?? 200,
-              color: Colors.grey[300],
-              child: const Center(
-                child: CircularProgressIndicator(),
+              color: placeholderColor,
+              child: Center(
+                child: CircularProgressIndicator(
+                  valueColor:
+                      AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+                ),
               ),
             ),
             errorWidget: (context, url, error) => Container(
               height: height ?? 200,
-              color: Colors.grey[300],
-              child: const Icon(Icons.error),
+              color: placeholderColor,
+              child: Icon(Icons.broken_image, color: errorIconColor, size: 40),
             ),
           )
         : Image.asset(
-            src,
+            src.isNotEmpty
+                ? src
+                : 'images/beotura_logo.png', // Fallback to a local asset if src is empty for asset images
             fit: fit,
             height: height,
             width: fullWidth ? double.infinity : null,
             errorBuilder: (context, error, stackTrace) => Container(
               height: height ?? 200,
-              color: Colors.grey[300],
-              child: const Icon(Icons.error),
+              color: placeholderColor,
+              child: Icon(Icons.broken_image, color: errorIconColor, size: 40),
             ),
           );
 
@@ -104,15 +121,19 @@ class ImageComponent extends StatelessWidget {
   }
 
   void _showFullScreenImage(BuildContext context) {
+    // This context is from the onTap callback
+    final theme = Theme.of(context);
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => Scaffold(
-          backgroundColor: Colors.black,
+          backgroundColor: theme
+              .scaffoldBackgroundColor, // Smoky black for fullscreen background
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
-            iconTheme: const IconThemeData(color: Colors.white),
+            iconTheme:
+                IconThemeData(color: theme.colorScheme.onSurface), // White icon
           ),
           body: Center(
             child: InteractiveViewer(
@@ -120,7 +141,7 @@ class ImageComponent extends StatelessWidget {
               maxScale: 3.0,
               child: Hero(
                 tag: 'tour_image_$src',
-                child: _buildImage(),
+                child: _buildImage(context), // Pass context
               ),
             ),
           ),

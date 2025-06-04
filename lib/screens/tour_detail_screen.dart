@@ -292,37 +292,38 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
   // Build a content component
   Widget _buildContentComponent(ContentComponent component) {
     final theme = Theme.of(context);
-    final accentColor = theme.colorScheme.secondary;
-    // Force text color to white
-    const textColor = Colors.white;
+    final primaryColor = theme.colorScheme.primary; // Fire-brick for accents
+    final onSurfaceColor =
+        theme.colorScheme.onSurface; // White for text on dark surfaces
+    final gunmetalColor = theme.colorScheme.secondary; // Gunmetal for titles
 
     switch (component.component) {
       case 'title':
         return TitleComponent(
           text: component.text ?? '',
-          style: theme.textTheme.headlineSmall!
-              .copyWith(fontWeight: FontWeight.bold, color: textColor),
+          style: theme.textTheme.headlineSmall!.copyWith(
+              fontWeight: FontWeight.bold,
+              color: gunmetalColor), // Gunmetal for titles
         );
       case 'paragraph':
         return ParagraphComponent(
           text: component.text ?? '',
-          style: theme.textTheme.bodyMedium!.copyWith(color: textColor),
+          style: theme.textTheme.bodyMedium!
+              .copyWith(color: onSurfaceColor), // White for paragraphs
         );
       case 'prompt':
         return PromptComponent(
           text: component.text ?? '',
           style: theme.textTheme.titleMedium!.copyWith(
             fontStyle: FontStyle.italic,
-            color: accentColor,
+            color: primaryColor, // Accent color for prompts
           ),
         );
       case 'image':
         return ImageComponent(
-          imageUrl: component.src ?? '',
+          src: component.src ?? '', // Correctly pass to 'src'
           caption: component.caption,
-          src: '',
-          captionStyle: theme.textTheme.bodySmall!
-              .copyWith(fontStyle: FontStyle.italic, color: textColor),
+          isNetworkImage: true,
         );
       case 'map':
         List<MapMarker> mapMarkers = [];
@@ -347,8 +348,8 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
         return ButtonComponent(
           text: component.text ?? 'Button',
           action: component.action,
-          textColor: Colors.white,
-          backgroundColor: accentColor,
+          textColor: theme.colorScheme.onPrimary, // Text on primary color
+          backgroundColor: primaryColor, // Accent color for buttons
           onTap: () {
             if (component.action == 'endTour') {
               Navigator.of(context).pop();
@@ -358,8 +359,8 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
       default:
         return Container(
           padding: const EdgeInsets.all(16),
-          child: Text('Unknown component: \\${component.component}',
-              style: const TextStyle(color: textColor)),
+          child: Text('Unknown component: \\\\${component.component}',
+              style: TextStyle(color: onSurfaceColor)),
         );
     }
   }
@@ -367,197 +368,209 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
   // Build a title page
   Widget _buildTitlePage(TitlePage page) {
     final theme = Theme.of(context);
-    final accentColor = theme.colorScheme.secondary;
-    final backgroundColor = theme.scaffoldBackgroundColor;
-    final textColor = theme.textTheme.bodyMedium?.color ?? Colors.black;
+    final primaryColor = theme.colorScheme.primary; // Fire-brick
+    final onBackgroundColor = theme.colorScheme.onSurface; // White text
 
     return Container(
-      color: backgroundColor,
-      child: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            controller: _scrollControllers[_currentPageIndex],
-            physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Tour image
-                  if (page.imageUrl != null)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Image.network(
-                        page.imageUrl!,
-                        height: MediaQuery.of(context).size.height * 0.25,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
+        color: theme.scaffoldBackgroundColor, // Smoky-black
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              controller: _scrollControllers[_currentPageIndex],
+              physics: const BouncingScrollPhysics(),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Tour image
+                    if (page.imageUrl != null)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.network(
+                          page.imageUrl!,
                           height: MediaQuery.of(context).size.height * 0.25,
-                          color: Colors.grey[600],
-                          child: const Icon(Icons.broken_image,
-                              color: Colors.white, size: 50),
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                            height: MediaQuery.of(context).size.height * 0.25,
+                            color: theme.colorScheme.surface
+                                .withOpacity(0.5), // Gunmetal tint
+                            child: Icon(Icons.broken_image,
+                                color: onBackgroundColor, size: 50),
+                          ),
                         ),
                       ),
-                    ),
-                  const SizedBox(height: 24),
-                  // Tour title
-                  Text(
-                    page.title,
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      color: accentColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  // Subtitle
-                  Text(
-                    page.subtitle,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontStyle: FontStyle.italic,
-                      color: textColor.withOpacity(0.7),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  if (page.authorName != null) ...[
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 24),
+                    // Tour title
                     Text(
-                      'By ${page.authorName}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: textColor.withOpacity(0.6),
+                      page.title,
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        color: onBackgroundColor, // White text for title
+                        fontWeight: FontWeight.bold,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                  ],
-                  if (page.description != null) ...[
+                    const SizedBox(height: 12),
+                    // Subtitle
+                    Text(
+                      page.subtitle,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontStyle: FontStyle.italic,
+                        color: onBackgroundColor.withOpacity(0.7),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    if (page.authorName != null) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        'By ${page.authorName}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: onBackgroundColor.withOpacity(0.6),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                    if (page.description != null) ...[
+                      const SizedBox(height: 18),
+                      Text(
+                        page.description!,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          height: 1.6,
+                          color: onBackgroundColor.withOpacity(0.9),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                     const SizedBox(height: 18),
-                    Text(
-                      page.description!,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        height: 1.6,
-                        color: textColor.withOpacity(0.9),
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                  const SizedBox(height: 18),
-                  // Suggested time and start location
-                  if (page.suggestedTime != null || page.startLocation != null)
-                    Column(
-                      children: [
-                        if (page.suggestedTime != null)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.access_time, color: accentColor),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Suggested: ${page.suggestedTime}',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: accentColor,
-                                  fontWeight: FontWeight.w600,
+                    // Suggested time and start location
+                    if (page.suggestedTime != null ||
+                        page.startLocation != null)
+                      Column(
+                        children: [
+                          if (page.suggestedTime != null)
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.access_time,
+                                    color: primaryColor), // Accent
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Suggested: ${page.suggestedTime}',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: primaryColor, // Accent
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        if (page.startLocation != null) ...[
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.place, color: accentColor),
-                              const SizedBox(width: 6),
-                              Text(
-                                page.startLocation?['label'] ??
-                                    'Start Location',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: accentColor,
-                                  fontWeight: FontWeight.w600,
+                              ],
+                            ),
+                          if (page.startLocation != null) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.place,
+                                    color: primaryColor), // Accent
+                                const SizedBox(width: 6),
+                                Text(
+                                  page.startLocation?['label'] ??
+                                      'Start Location',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: primaryColor, // Accent
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              final lat = page.startLocation?['lat'];
-                              final lng = page.startLocation?['lng'];
-                              final url =
-                                  'https://www.google.com/maps/search/?api=1&query=$lat,$lng';
-                              launchUrl(Uri.parse(url));
-                            },
-                            icon: const Icon(Icons.navigation,
-                                color: Colors.white),
-                            label: const Text('Navigate to Start',
-                                style: TextStyle(color: Colors.white)),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: accentColor,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                final lat = page.startLocation?['lat'];
+                                final lng = page.startLocation?['lng'];
+                                final url =
+                                    'https://www.google.com/maps/search/?api=1&query=$lat,$lng';
+                                launchUrl(Uri.parse(url));
+                              },
+                              icon: Icon(Icons.navigation,
+                                  color: theme
+                                      .colorScheme.onPrimary), // Text on accent
+                              label: Text('Navigate to Start',
+                                  style: TextStyle(
+                                      color: theme.colorScheme
+                                          .onPrimary)), // Text on accent
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryColor, // Accent
+                                foregroundColor: theme.colorScheme.onPrimary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
                               ),
                             ),
+                          ]
+                        ],
+                      ),
+                    const SizedBox(height: 24),
+                    // Start button
+                    if (page.showStartButton)
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          if (_immersiveTour.pages.length > 1) {
+                            _pageController.nextPage(
+                              duration: const Duration(milliseconds: 500),
+                              curve: Curves.easeInOut,
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor, // Accent
+                          foregroundColor: theme.colorScheme.onPrimary,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
                           ),
-                        ]
-                      ],
-                    ),
-                  const SizedBox(height: 24),
-                  // Start button
-                  if (page.showStartButton)
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        if (_immersiveTour.pages.length > 1) {
-                          _pageController.nextPage(
-                            duration: const Duration(milliseconds: 500),
-                            curve: Curves.easeInOut,
-                          );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: accentColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        icon: Icon(Icons.play_arrow,
+                            color:
+                                theme.colorScheme.onPrimary), // Text on accent
+                        label: Text(
+                          'Begin Tour',
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: theme
+                                  .colorScheme.onPrimary), // Text on accent
                         ),
                       ),
-                      icon: const Icon(Icons.play_arrow, color: Colors.white),
-                      label: const Text(
-                        'Begin Tour',
-                        style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white),
-                      ),
-                    ),
-                  const SizedBox(height: 16),
-                ],
+                    const SizedBox(height: 16),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      ),
-    );
+        ));
   }
 
   // Build a navigation page
   Widget _buildNavigationPage(NavigationPage page) {
     final theme = Theme.of(context);
-    final accentColor = theme.colorScheme.secondary;
-    final backgroundColor = theme.scaffoldBackgroundColor;
-    final textColor = theme.textTheme.bodyMedium?.color ?? Colors.black;
+    final primaryColor = theme.colorScheme.primary; // Fire-brick
+    final onSurfaceColor = theme.colorScheme.onSurface; // White text
+    final surfaceColor = theme.colorScheme.surface; // Gunmetal
 
-    // Use FMCTileProvider or Google Maps as appropriate
-    // For demonstration, we show a route from current location to the first marker (if any)
-    // In a real app, you would use a navigation/map widget that supports routing and step-by-step navigation
+    // Define hasRoute and destination here
     final hasRoute = page.mapMarkers != null && page.mapMarkers!.isNotEmpty;
-    final destination = hasRoute ? page.mapMarkers!.first : null;
+    final destination = hasRoute
+        ? page.mapMarkers!.firstWhere(
+            (marker) => marker.lat != 0.0 && marker.lng != 0.0,
+            orElse: () => page.mapMarkers!.first)
+        : null;
 
     return Container(
-      color: backgroundColor,
+      color: theme.scaffoldBackgroundColor, // Smoky-black
       child: SafeArea(
         child: Column(
           children: [
@@ -570,10 +583,11 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                   IconButton(
                     icon: Icon(
                       Icons.arrow_back,
-                      color: accentColor,
+                      color: primaryColor, // Accent
                     ),
                     style: IconButton.styleFrom(
-                      backgroundColor: accentColor.withOpacity(0.1),
+                      backgroundColor: primaryColor
+                          .withOpacity(0.1), // Subtle accent background
                       padding: const EdgeInsets.all(8),
                     ),
                     onPressed: () => Navigator.of(context).pop(),
@@ -582,13 +596,13 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surface.withOpacity(0.8),
+                      color: surfaceColor.withOpacity(0.8), // Gunmetal tint
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       '${_currentPageIndex + 1}/${_immersiveTour.pages.length}',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: accentColor,
+                        color: onSurfaceColor, // White text on gunmetal
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -614,7 +628,8 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                     padding: const EdgeInsets.all(16.0),
                     child: Text(
                       page.instructions,
-                      style: theme.textTheme.bodyMedium,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                          color: onSurfaceColor), // Ensure text is white
                     ),
                   ),
                 ],
@@ -629,11 +644,12 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
   // Build a content page
   Widget _buildContentPage(ContentPage page) {
     final theme = Theme.of(context);
-    final accentColor = theme.colorScheme.secondary;
-    final backgroundColor = theme.scaffoldBackgroundColor;
+    final primaryColor = theme.colorScheme.primary; // Fire-brick
+    final onSurfaceColor = theme.colorScheme.onSurface; // White text
+    final surfaceColor = theme.colorScheme.surface; // Gunmetal
 
     return Container(
-      color: backgroundColor,
+      color: theme.scaffoldBackgroundColor, // Smoky-black
       child: SafeArea(
         child: Column(
           children: [
@@ -646,10 +662,11 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                   IconButton(
                     icon: Icon(
                       Icons.arrow_back,
-                      color: accentColor,
+                      color: primaryColor, // Accent
                     ),
                     style: IconButton.styleFrom(
-                      backgroundColor: accentColor.withOpacity(0.1),
+                      backgroundColor: primaryColor
+                          .withOpacity(0.1), // Subtle accent background
                       padding: const EdgeInsets.all(8),
                     ),
                     onPressed: () => Navigator.of(context).pop(),
@@ -658,13 +675,13 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surface.withOpacity(0.8),
+                      color: surfaceColor.withOpacity(0.8), // Gunmetal tint
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       '${_currentPageIndex + 1}/${_immersiveTour.pages.length}',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: accentColor,
+                        color: onSurfaceColor, // White text on gunmetal
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -712,18 +729,24 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
   Widget build(BuildContext context) {
     if (_isLoadingTour) {
       return Scaffold(
+        backgroundColor:
+            Theme.of(context).scaffoldBackgroundColor, // Smoky-black
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const CircularProgressIndicator(),
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(
+                    Theme.of(context).colorScheme.primary), // Fire-brick
+              ),
               const SizedBox(height: 16),
               Text(
-                'Loading "${widget.tour.title}"...',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
+                'Loading "${widget.tour.title_en}"...', // Assuming title_en for loading
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface, // White text
+                    ),
               ),
             ],
           ),

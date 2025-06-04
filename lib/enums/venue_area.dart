@@ -21,7 +21,11 @@ enum VenueArea {
       // Add other cases as needed
       default:
         // Simple title case conversion for other values
-        return name.replaceAll('_', ' ').split(' ').map((e) => e[0].toUpperCase() + e.substring(1).toLowerCase()).join(' ');
+        return name
+            .replaceAll('_', ' ')
+            .split(' ')
+            .map((e) => e[0].toUpperCase() + e.substring(1).toLowerCase())
+            .join(' ');
     }
   }
 }

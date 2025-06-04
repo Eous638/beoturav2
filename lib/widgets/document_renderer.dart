@@ -3,7 +3,7 @@ import 'package:beotura/widgets/inline_tour_card.dart'; // Import InlineTourCard
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../services/image_resolver_service.dart';
-import './tour_components/video_component.dart'; // Import VideoComponent
+// Import VideoComponent
 import './audio_player_widget.dart'; // Import AudioPlayerWidget
 
 /// A widget that renders rich content from a document structure

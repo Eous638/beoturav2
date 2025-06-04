@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../enums/story_type_enum.dart'; // Import the new enum
 
 class Blog {
   final String id;
@@ -8,6 +9,7 @@ class Blog {
   final Map<String, dynamic> contentSr;
   final String? imageUrl;
   final DateTime? createdAt;
+  final StoryType storyType; // Added storyType field
 
   Blog({
     required this.id,
@@ -17,13 +19,14 @@ class Blog {
     required this.contentSr,
     this.imageUrl,
     this.createdAt,
+    required this.storyType, // Added to constructor
   });
 
   factory Blog.fromJson(Map<String, dynamic> json) {
     // Extract image URL from nested structure if available
     String? imageUrl;
-    if (json['image'] != null && 
-        json['image']['image'] != null && 
+    if (json['image'] != null &&
+        json['image']['image'] != null &&
         json['image']['image']['url'] != null &&
         json['image']['image']['url'] != '') {
       imageUrl = json['image']['image']['url'];
@@ -45,6 +48,22 @@ class Blog {
       }
     }
 
+    // Determine StoryType
+    StoryType storyType = StoryType.GENERAL_STORY; // Default value
+    if (json['storyType'] != null && json['storyType'] is String) {
+      try {
+        storyType = StoryType.values.firstWhere(
+          (e) =>
+              e.toString().split('.').last.toLowerCase() ==
+              (json['storyType'] as String).toLowerCase(),
+          orElse: () => StoryType.GENERAL_STORY,
+        );
+      } catch (e) {
+        debugPrint('Error parsing storyType: $e. Defaulting to GENERAL_STORY.');
+        storyType = StoryType.GENERAL_STORY;
+      }
+    }
+
     return Blog(
       id: json['id'] ?? '',
       titleEn: json['title_en'] ?? '',
@@ -53,6 +72,7 @@ class Blog {
       contentSr: json['content_sr'] ?? {'document': []},
       imageUrl: imageUrl, // Could be null
       createdAt: dateTime, // Could be null
+      storyType: storyType, // Assign storyType
     );
   }
 }

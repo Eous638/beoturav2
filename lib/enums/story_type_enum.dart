@@ -1,0 +1,7 @@
+enum StoryType {
+  INTERVIEW,
+  TOUR_PROMOTION,
+  LANDMARK_SPOTLIGHT,
+  VENUE_SPOTLIGHT,
+  GENERAL_STORY, // Default or general type
+}

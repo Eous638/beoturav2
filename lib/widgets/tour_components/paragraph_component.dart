@@ -6,7 +6,8 @@ class ParagraphComponent extends StatelessWidget {
 
   const ParagraphComponent({
     super.key,
-    required this.text, required TextStyle style,
+    required this.text,
+    required TextStyle style,
   });
 
   @override
@@ -18,7 +19,7 @@ class ParagraphComponent extends StatelessWidget {
         style: TextStyle(
           fontSize: 16,
           height: 1.6,
-          color: Colors.black.withOpacity(0.8),
+          color: Colors.white.withOpacity(0.8),
         ),
       ),
     );

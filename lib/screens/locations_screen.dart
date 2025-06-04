@@ -67,7 +67,7 @@ class _LocationsScreenState extends ConsumerState<LocationsScreen> {
         appBar: AppBar(
             title: Text(
               selectedCategoryId == null
-                  ? l10n.translate('Locations')
+                  ? l10n.translate('Landmarks')
                   : _selectedCategoryName ?? l10n.translate('Locations'),
               style: const TextStyle(
                 fontWeight: FontWeight.bold,

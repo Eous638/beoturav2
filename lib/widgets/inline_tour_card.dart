@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import '../classes/tours_class.dart';
 import '../providers/tour_provider.dart'; // Use the actual tour provider
 import '../screens/tour_detail_screen.dart';
 import '../l10n/localization_helper.dart';
