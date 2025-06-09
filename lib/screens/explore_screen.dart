@@ -12,192 +12,99 @@ class _ExploreScreenState extends State<ExploreScreen>
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
 
-  bool _isSearchVisible = true;
-  bool _isFilterActive = true;
-  String _activeContentType = 'all';
-  String? _activeTheme; // Changed to single selection
+  String? _selectedCardType; // Track which card is selected
 
-  AnimationController? _searchAnimationController;
-  Animation<double>? _searchAnimation;
+  AnimationController? _cardAnimationController;
+  Animation<double>? _cardHeightAnimation;
+  Animation<double>? _cardWidthAnimation;
+  Animation<double>? _cardOpacityAnimation;
 
-  // Content type filters with icons
-  static const List<Map<String, dynamic>> _contentTypes = [
-    {'id': 'all', 'name': 'All', 'icon': Icons.explore, 'color': 0xFF666666},
+  // Content type cards with colors and details
+  static const List<Map<String, dynamic>> _contentCards = [
     {
-      'id': 'stories',
-      'name': 'Stories',
-      'icon': Icons.auto_stories,
-      'color': 0xFF6366F1
-    },
-    {'id': 'tours', 'name': 'Tours', 'icon': Icons.route, 'color': 0xFF10B981},
-    {
-      'id': 'venues',
-      'name': 'Venues',
-      'icon': Icons.restaurant,
-      'color': 0xFFF59E0B
+      'id': 'tours',
+      'name': 'Tours',
+      'icon': Icons.route,
+      'color': Color(0xFF10B981),
+      'lightColor': Color(0xFF34D399),
+      'description': 'Guided experiences'
     },
     {
       'id': 'landmarks',
       'name': 'Landmarks',
       'icon': Icons.account_balance,
-      'color': 0xFF8B5CF6
+      'color': Color(0xFF8B5CF6),
+      'lightColor': Color(0xFFA78BFA),
+      'description': 'Historic sites'
     },
     {
-      'id': 'monuments',
-      'name': 'Monuments',
-      'icon': Icons.museum,
-      'color': 0xFFEC4899
+      'id': 'venues',
+      'name': 'Venues',
+      'icon': Icons.restaurant,
+      'color': Color(0xFFF59E0B),
+      'lightColor': Color(0xFFFBBF24),
+      'description': 'Places to visit'
     },
     {
-      'id': 'audio',
-      'name': 'Audio',
-      'icon': Icons.headphones,
-      'color': 0xFF06B6D4
-    },
-    {
-      'id': 'nearby',
-      'name': 'Nearby',
-      'icon': Icons.near_me,
-      'color': 0xFFEF4444
+      'id': 'events',
+      'name': 'Events',
+      'icon': Icons.event,
+      'color': Color(0xFFEC4899),
+      'lightColor': Color(0xFFF472B6),
+      'description': 'Live happenings'
     },
   ];
-
-  // Fun creative themes
-  static const List<Map<String, dynamic>> _funThemes = [
-    {
-      'id': 'spicy',
-      'name': '🌶️ Spicy Stories',
-      'subtitle': 'Drama & Scandal',
-      'gradient': [0xFFDC2626, 0xFFEF4444],
-      'emoji': '🌶️'
-    },
-    {
-      'id': 'mystery',
-      'name': '🕵️ Mystery Mode',
-      'subtitle': 'Hidden Secrets',
-      'gradient': [0xFF7C2D12, 0xFF9A3412],
-      'emoji': '🕵️'
-    },
-    {
-      'id': 'romantic',
-      'name': '💕 Love Stories',
-      'subtitle': 'Romance & Poetry',
-      'gradient': [0xFFBE185D, 0xFFDB2777],
-      'emoji': '💕'
-    },
-    {
-      'id': 'midnight',
-      'name': '🌙 After Dark',
-      'subtitle': 'Night Adventures',
-      'gradient': [0xFF1E1B4B, 0xFF3730A3],
-      'emoji': '🌙'
-    },
-    {
-      'id': 'underground',
-      'name': '🚇 Underground',
-      'subtitle': 'Hidden Gems',
-      'gradient': [0xFF065F46, 0xFF047857],
-      'emoji': '🚇'
-    },
-    {
-      'id': 'vintage',
-      'name': '📻 Retro Vibes',
-      'subtitle': 'Old School Cool',
-      'gradient': [0xFF92400E, 0xFFB45309],
-      'emoji': '📻'
-    },
-    {
-      'id': 'local',
-      'name': '🏠 Local Secrets',
-      'subtitle': 'Insider Tips',
-      'gradient': [0xFF0F766E, 0xFF0D9488],
-      'emoji': '🏠'
-    },
-    {
-      'id': 'adventure',
-      'name': '⚡ High Energy',
-      'subtitle': 'Adrenaline Rush',
-      'gradient': [0xFFC2410C, 0xFFEA580C],
-      'emoji': '⚡'
-    },
-  ];
-
-  // Modern color palette
-  static const Color _backgroundPrimary = Color(0xFF121212);
-  static const Color _backgroundSecondary = Color(0xFF1E1E1E);
-  static const Color _backgroundCard = Color(0xFF2D2D2D);
-  static const Color _accentRed = Color(0xFFFF3B30);
-  static const Color _accentBlue = Color(0xFF007AFF);
-  static const Color _accentGreen = Color(0xFF34C759);
-  static const Color _accentPurple = Color(0xFFAF52DE);
-  static const Color _accentOrange = Color(0xFFFF9500);
-  static const Color _accentTeal = Color(0xFF5AC8FA);
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
-    _searchController.addListener(() {
-      setState(() {}); // Rebuild to show/hide clear button
-    });
 
-    _searchAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 200),
+    _cardAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 300), // Quick and smooth animation
       vsync: this,
     );
-    _searchAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+    _cardHeightAnimation = Tween<double>(begin: 100.0, end: 250.0).animate(
       CurvedAnimation(
-          parent: _searchAnimationController!, curve: Curves.easeInOut),
+          parent: _cardAnimationController!, curve: Curves.easeInOut),
+    );
+    _cardOpacityAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(
+          parent: _cardAnimationController!, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Initialize animations using MediaQuery.of(context) safely
+    _cardWidthAnimation = Tween<double>(
+      begin: 160.0,
+      end: MediaQuery.of(context).size.width,
+    ).animate(
+      CurvedAnimation(
+        parent: _cardAnimationController!,
+        curve: Curves.easeInOut,
+      ),
     );
   }
 
   @override
   void dispose() {
-    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _searchController.dispose();
-    _searchAnimationController?.dispose();
+    _cardAnimationController?.dispose();
     super.dispose();
   }
 
-  void _onScroll() {
-    const threshold = 80.0;
-    const returnThreshold = 40.0; // Less strict threshold for returning
-    final shouldHide = _scrollController.offset > threshold;
-    final shouldReturn = _scrollController.offset <= returnThreshold;
-
-    // Search bar: visible at top, hidden when scrolling down, returns on slight scroll up
-    if (shouldHide && _isSearchVisible) {
-      setState(() => _isSearchVisible = false);
-      _searchAnimationController?.forward();
-    } else if (shouldReturn && !_isSearchVisible) {
-      setState(() => _isSearchVisible = true);
-      _searchAnimationController?.reverse();
-    }
-  }
-
-  void _toggleFilter() {
+  void _onCardSelected(String cardType) {
     setState(() {
-      _isFilterActive = !_isFilterActive;
-      if (!_isFilterActive) {
-        // Hide filters
-        _scrollController.jumpTo(0); // Scroll to top
-      }
-    });
-  }
-
-  void _onContentTypeSelected(String type) {
-    setState(() {
-      _activeContentType = type;
-    });
-  }
-
-  void _onThemeSelected(String themeId) {
-    setState(() {
-      if (_activeTheme == themeId) {
-        _activeTheme = null; // Deselect if already selected
+      if (_selectedCardType == cardType) {
+        _selectedCardType = null;
+        _cardAnimationController?.reverse();
       } else {
-        _activeTheme = themeId;
+        _selectedCardType = cardType;
+        _cardAnimationController?.forward();
       }
     });
   }
@@ -306,73 +213,26 @@ class _ExploreScreenState extends State<ExploreScreen>
       },
       {
         'id': 8,
-        'type': 'stories',
-        'theme': 'courtyards',
+        'type': 'events',
+        'theme': 'music',
         'image':
-            'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=800&q=80',
-        'title': 'Tales of Courtyard Cats',
-        'subtitle':
-            'Stories of Belgrade\'s most famous feline residents and their territories',
-        'badge': '✍️ Story',
-        'views': '1.2K',
-        'readTime': '4 min',
+            'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=800&q=80',
+        'title': 'Jazz Festival Tonight',
+        'subtitle': 'Live performances in the heart of Belgrade',
+        'badge': '🎵 Event',
+        'rating': 4.7,
+        'reviewCount': 89,
+        'distance': 150,
         'isLocal': true,
-        'action': 'Read Now',
-      },
-      {
-        'id': 9,
-        'type': 'monuments',
-        'theme': 'revolutionary',
-        'image':
-            'https://images.unsplash.com/photo-1520637836862-4d197d17c8a4?auto=format&fit=crop&w=800&q=80',
-        'title': 'Pobednik Monument',
-        'subtitle':
-            'Victory Monument commemorating Serbia\'s battles for independence',
-        'badge': '🗿 Monument',
-        'year': '1913',
-        'distance': 1200,
-        'isLocal': false,
-        'action': 'View Monument',
-      },
-      {
-        'id': 10,
-        'type': 'tours',
-        'theme': 'waterfront',
-        'image':
-            'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=800&q=80',
-        'title': 'Riverside Promenade',
-        'subtitle': 'Scenic walk along Danube and Sava river confluence',
-        'badge': '📍 Trail',
-        'rating': 4.5,
-        'reviewCount': 67,
-        'distance': 600,
-        'isLocal': true,
-        'action': 'Begin Trail',
+        'action': 'Get Tickets',
       },
     ];
 
     return items.where((item) {
-      // Filter by content type
-      if (_activeContentType != 'all') {
-        if (_activeContentType == 'audio' &&
-            !['tours'].contains(item['type'])) {
-          return false;
-        } else if (_activeContentType == 'nearby' &&
-            !(item['isLocal'] == true)) {
-          return false;
-        } else if (!_activeContentType
-                .toLowerCase()
-                .contains(item['type'] as String) &&
-            !['audio', 'nearby'].contains(_activeContentType)) {
-          return false;
-        }
+      // Filter by selected card type
+      if (_selectedCardType != null) {
+        return item['type'] == _selectedCardType;
       }
-
-      // Filter by themes
-      if (_activeTheme != null && _activeTheme!.isNotEmpty) {
-        return _activeTheme == item['theme'];
-      }
-
       return true;
     }).toList();
   }
@@ -380,36 +240,12 @@ class _ExploreScreenState extends State<ExploreScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _backgroundPrimary,
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: Column(
           children: [
-            // Animated Search Header - only show when visible
-            if (_isSearchVisible)
-              if (_searchAnimation != null)
-                AnimatedBuilder(
-                  animation: _searchAnimation!,
-                  builder: (context, child) {
-                    return Transform.translate(
-                      offset: Offset(0, -60 * _searchAnimation!.value),
-                      child: Opacity(
-                        opacity: 1 - _searchAnimation!.value,
-                        child: _buildSearchHeader(),
-                      ),
-                    );
-                  },
-                )
-              else
-                _buildSearchHeader(),
-            // Animated Chip Rows - only show when visible and filter is active
-            if (_isFilterActive)
-              Column(
-                children: [
-                  _buildContentTypeChips(),
-                  _buildThemeChips(),
-                ],
-              ),
-            // Main content - expands to fill available space
+            // Show search bar only when no card is selected
+            if (_selectedCardType == null) _buildSearchHeader(),
             Expanded(child: _buildMainFeed()),
           ],
         ),
@@ -422,7 +258,7 @@ class _ExploreScreenState extends State<ExploreScreen>
       height: 60,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: _backgroundPrimary,
+        color: Colors.black,
         border: Border(
           bottom: BorderSide(color: Colors.grey[800]!, width: 0.5),
         ),
@@ -433,12 +269,12 @@ class _ExploreScreenState extends State<ExploreScreen>
             child: Container(
               height: 44,
               decoration: BoxDecoration(
-                color: _backgroundSecondary,
+                color: Colors.grey[900],
                 borderRadius: BorderRadius.circular(22),
                 border: Border.all(color: Colors.grey[700]!, width: 0.5),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: Colors.black.withOpacity(0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -498,166 +334,209 @@ class _ExploreScreenState extends State<ExploreScreen>
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          GestureDetector(
-            onTap: _toggleFilter,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: _isFilterActive ? _accentRed : _backgroundSecondary,
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(
-                    color: _isFilterActive ? _accentRed : Colors.grey[700]!,
-                    width: 0.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: (_isFilterActive ? _accentRed : Colors.black)
-                        .withValues(alpha: 0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Icon(Icons.tune,
-                  color: _isFilterActive ? Colors.white : Colors.white70,
-                  size: 20),
-            ),
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildContentTypeChips() {
-    return Container(
-      height: 50,
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: _contentTypes.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (context, i) {
-          final type = _contentTypes[i];
-          final isSelected = _activeContentType == type['id'];
-
-          return GestureDetector(
-            onTap: () => _onContentTypeSelected(type['id']),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: isSelected ? _accentRed : Colors.transparent,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: isSelected ? _accentRed : Colors.grey[600]!,
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    type['icon'],
-                    color: isSelected ? Colors.white : Colors.white70,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    type['name'],
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: isSelected ? Colors.white : Colors.white70,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildThemeChips() {
-    return Container(
-      height: 50,
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: _funThemes.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (context, i) {
-          final theme = _funThemes[i];
-          final isSelected = _activeTheme == theme['id'];
-          final gradientColors = theme['gradient'] as List<int>;
-
-          return GestureDetector(
-            onTap: () => _onThemeSelected(theme['id']),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-              decoration: BoxDecoration(
-                gradient: isSelected
-                    ? LinearGradient(
-                        colors: gradientColors.map((c) => Color(c)).toList(),
-                      )
-                    : null,
-                color: isSelected ? null : Colors.transparent,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: isSelected ? Colors.transparent : Colors.grey[600]!,
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    theme['emoji'],
-                    style: TextStyle(
-                      fontSize: 16,
-                      // Use a larger font size for emojis
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    theme['name'],
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: isSelected ? Colors.white : Colors.white70,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
   Widget _buildMainFeed() {
-    final items = _feedItems;
+    final feedItems = _feedItems;
 
     return ListView.separated(
       controller: _scrollController,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: items.length + 1, // +1 for load more button only
-      separatorBuilder: (_, index) => const SizedBox(height: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      itemCount: feedItems.length + 1, // +1 for cards section
+      separatorBuilder: (_, index) => const SizedBox(height: 16),
       itemBuilder: (context, i) {
-        // Last item is load more button
-        if (i == items.length) {
-          return _buildLoadMoreButton();
+        // Ensure cards start at the beginning of the feed
+        if (i == 0) {
+          return _buildContentCardsSection();
         }
-        // Regular feed items
-        return _buildFeedCard(items[i]);
+
+        // Regular feed items (offset by 1 because of cards section)
+        return _buildFeedCard(feedItems[i - 1]);
       },
+    );
+  }
+
+  Widget _buildContentCardsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Expanded card header
+        if (_selectedCardType != null)
+          AnimatedBuilder(
+            animation: _cardAnimationController!,
+            builder: (context, child) {
+              return _buildExpandedCard();
+            },
+          ),
+
+        // Cards grid
+        AnimatedBuilder(
+          animation: _cardAnimationController!,
+          builder: (context, child) {
+            return Opacity(
+              opacity: _selectedCardType != null
+                  ? _cardOpacityAnimation!.value
+                  : 1.0,
+              child: _buildContentCardsGrid(),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildExpandedCard() {
+    if (_selectedCardType == null) return const SizedBox.shrink();
+
+    final selectedCard = _contentCards.firstWhere(
+      (card) => card['id'] == _selectedCardType,
+    );
+
+    return Container(
+      height: 50, // Much shorter header
+      width: MediaQuery.of(context).size.width,
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        border: Border.all(
+          width: 2,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              selectedCard['color'] as Color,
+              selectedCard['lightColor'] as Color,
+            ],
+          ),
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: (selectedCard['color'] as Color).withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: [
+            GestureDetector(
+              onTap: () => _onCardSelected(_selectedCardType!),
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Icon(
+              selectedCard['icon'] as IconData,
+              color: Colors.white,
+              size: 24,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                selectedCard['name'],
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContentCardsGrid() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: 1.6,
+        ),
+        itemCount: _contentCards.length,
+        itemBuilder: (context, index) {
+          final card = _contentCards[index];
+          return _buildContentCard(card);
+        },
+      ),
+    );
+  }
+
+  Widget _buildContentCard(Map<String, dynamic> card) {
+    return GestureDetector(
+      onTap: () => _onCardSelected(card['id']),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              card['color'] as Color,
+              card['lightColor'] as Color,
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: (card['color'] as Color).withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                card['icon'] as IconData,
+                color: Colors.white,
+                size: 24,
+              ),
+              const Spacer(),
+              Text(
+                card['name'],
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                card['description'],
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -668,7 +547,7 @@ class _ExploreScreenState extends State<ExploreScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
+            color: Colors.black.withOpacity(0.15),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -683,7 +562,7 @@ class _ExploreScreenState extends State<ExploreScreen>
               item['image'],
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) => Container(
-                color: _backgroundSecondary,
+                color: Colors.grey[900],
                 child: const Icon(Icons.image_not_supported,
                     color: Colors.grey, size: 50),
               ),
@@ -695,48 +574,11 @@ class _ExploreScreenState extends State<ExploreScreen>
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.transparent,
-                    Colors.black.withValues(alpha: 0.8),
+                    Colors.black.withOpacity(0.8),
                   ],
                 ),
               ),
             ),
-            // Badge
-            Positioned(
-              top: 12,
-              left: 12,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  item['badge'],
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-            // Bookmark
-            Positioned(
-              top: 12,
-              right: 12,
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Icon(Icons.bookmark_border,
-                    color: Colors.white, size: 16),
-              ),
-            ),
-            // Content
             Positioned(
               bottom: 16,
               left: 16,
@@ -767,108 +609,10 @@ class _ExploreScreenState extends State<ExploreScreen>
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildMetaInfo(item),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 18, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: _accentRed,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: _accentRed.withValues(alpha: 0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          item['action'],
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMetaInfo(Map<String, dynamic> item) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (item['rating'] != null) ...[
-          Row(
-            children: [
-              const Icon(Icons.star, color: Colors.amber, size: 14),
-              const SizedBox(width: 4),
-              Text(
-                '${item['rating']} (${item['reviewCount']})',
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
-              ),
-            ],
-          ),
-        ] else if (item['views'] != null) ...[
-          Text(
-            '${item['views']} views',
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
-          ),
-        ],
-        if (item['distance'] != null) ...[
-          const SizedBox(height: 2),
-          Row(
-            children: [
-              Icon(Icons.location_on, color: _accentRed, size: 14),
-              const SizedBox(width: 4),
-              Text(
-                '${item['distance']}m away',
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
-              ),
-            ],
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildLoadMoreButton() {
-    return Center(
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 20),
-        child: ElevatedButton(
-          onPressed: () {
-            // Load more items logic
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _accentRed,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
-            elevation: 4,
-          ),
-          child: const Text(
-            'Load More',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
         ),
       ),
     );
